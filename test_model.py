@@ -17,7 +17,7 @@ def create_test_model(level_cost):
         keyslots = f.read().splitlines()
     
     print "read in: azerty letters and numbers"
-    azerty = pd.read_csv("input\\azerty.csv", index_col=1, sep="\t", encoding='utf-8', quoting=3).to_dict()["keyslot"]
+    azerty = getAzerty()
     numbers = pd.read_csv("input\\numbers.csv", index_col=1, sep="\t", encoding='utf-8', quoting=3).to_dict()["keyslot"]
     #remove number keys from free keyslots
 
@@ -221,3 +221,9 @@ def create_dummy_values_performance_ergonomics_probability(randomize=False):
     performance_strings = [s.encode("utf-8") for s in performance_string]
     with open("input\\performance.csv", 'w') as performance_file:
         performance_file.writelines(performance_strings)
+        
+def getAzerty():
+    """
+        Returns the Azerty keyboard in form of a dict from characters to keyslots (=mapping)
+    """
+    return pd.read_csv("input\\azerty.csv", index_col=1, sep="\t", encoding='utf-8', quoting=3).to_dict()["keyslot"]

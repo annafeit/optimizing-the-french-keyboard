@@ -1,10 +1,26 @@
 # -*- coding: utf-8 -*-
 from gurobipy import *
 from plotting import *
+from test_model import *
 PYTHONIOENCODING="utf-8"
 
-
-def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, azerty,\
+def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, level_cost, neighborhood_size, quadratic=0):
+    """
+        A wrapper for the _solve_the_keyboard_Problem function to use the standard test variables
+    """
+    azerty,\
+    characters,\
+    keyslots,\
+    letters,\
+    p_single, p_bigram,\
+    performance,\
+    similarity_c_c, similarity_c_l,\
+    distance_level_0, distance_level_1,\
+    ergonomics\
+     = create_test_model(level_cost)
+                   
+    model,mapping =  _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, neighborhood_size,\
+                               azerty,\
                                characters,\
                                keyslots,\
                                letters,\
@@ -12,13 +28,42 @@ def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, azerty,\
                                performance,\
                                similarity_c_c, similarity_c_l,\
                                distance_level_0, distance_level_1,\
-                               ergonomics, quadratic=0):
+                               ergonomics, quadratic=quadratic)
     
-    #create a map to numbers 
+    obj, P, A, F, E = _get_objectives(mapping, w_p, w_a, w_f, w_e, neighborhood_size,\
+                               azerty,\
+                               characters,\
+                               keyslots,\
+                               letters,\
+                               p_single, p_bigram,\
+                               performance,\
+                               similarity_c_c, similarity_c_l,\
+                               distance_level_0, distance_level_1,\
+                               ergonomics, quadratic=quadratic)
+    plot_mapping(mapping, plotname="mappings\\final.png", azerty=azerty, letters=letters,\
+                 objective=obj,\
+                 p=P, a=A, f=F, e=E, w_p=w_p,w_a=w_a, w_f=w_f, w_e=w_e)
+
+    log_mapping(mapping, "mappings\\final.csv")
+    
+    return mapping
+    
+
+
+def _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, neighborhood_size,
+                               azerty,\
+                               characters,\
+                               keyslots,\
+                               letters,\
+                               p_single, p_bigram,\
+                               performance,\
+                               similarity_c_c, similarity_c_l,\
+                               distance_level_0, distance_level_1,\
+                               ergonomics, quadratic=0):    
     
     #Test some stuff in advance to avoid infeasbility:
     if len(characters) > len(keyslots):
-        print "Error: more characters than keyslots"
+        print "Error: more characters sthan keyslots"
         return
     
     m = Model("keyboard_layout")    
@@ -34,6 +79,7 @@ def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, azerty,\
     m.update()
     m._vars = m.getVars()
     
+    #Define the objective terms
     P = quicksum(
             ((p_bigram[(c,l)]*performance[(s,azerty[l])]) + (p_bigram[(l,c)]*performance[(azerty[l],s)]))*x[c,s]\
                 for c in characters for s in keyslots for l in letters
@@ -43,9 +89,17 @@ def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, azerty,\
             (p_single[c] + p_single[l])*similarity_c_l[(c,l)]*distance_level_0[s,azerty[l]]*x[c,s] \
                  for s in keyslots for (c,l) in similarity_c_l)       
     if quadratic: 
-        A += quicksum(
-            (p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]*distance_level_0[(s1,s2)]*x[c1,s1]*x[c2,s2]\
-                 for s1 in keyslots for s2 in keyslots for (c1,c2) in similarity_c_c)
+        #This part is a *bonus*. If one of those character pairs are close together (in the neighborhood), we give a bonus that corresponds
+        #to the frequency*(1-distance)
+        #A += quicksum(
+        #    (p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]*(1-distance_level_1[(s1,s2)])*x[c1,s1]*x[c2,s2]\
+        #         for (c1,c2) in similarity_c_c for s1 in keyslots for s2 in keyslots)
+                
+        A += -1*(quicksum(
+            (p_single[c1] + p_single[c2])*(1-distance_level_0[(s1,s2)])*x[c1,s1]*x[c2,s2]\
+                 for (c1,c2) in similarity_c_c \
+                    for s1 in keyslots \
+                        for s2 in neighborhood(s1, neighborhood_size, keyslots, distance_level_0)))
         
     F = quicksum(
             #if that character was previously not on azerty, distance is 0.
@@ -57,7 +111,7 @@ def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, azerty,\
             ((p_bigram[(c,l)]*ergonomics[(s,azerty[l])]) + (p_bigram[(l,c)]*ergonomics[(azerty[l],s)]))*x[c,s]\
                 for c in characters for s in keyslots for l in letters
         )    
-    
+     
     m._P = P
     m._A = A
     m._F = F
@@ -83,7 +137,10 @@ def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, azerty,\
     
     m.update()
     m.write("model.lp")
-    print "optimizing..."
+    if quadratic:
+        print "optimizing with quadratic terms..."
+    else:
+        print "optimizing with linear terms only..."
     #optimize and pass custom callback function
     m.optimize(opti_callback)
     
@@ -121,7 +178,7 @@ def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, azerty,\
     #        print('%s' % c.constrName)     
     
     #return the model with the fixed solution
-    return m, mapping, x
+    return m, mapping
 
 
 
@@ -170,11 +227,11 @@ def create_mapping(m):
     return mapping
 
 def optimize_reformulation(lp_path):
-    m = read(lp_path)        
+    model = read(lp_path)        
     
     print "optimizing..."
     #optimize and pass custom callback function
-    m.optimize(opti_callback)      
+    model.optimize(opti_callback)      
 
     print "done"
     
@@ -194,19 +251,94 @@ def optimize_reformulation(lp_path):
         print('Optimization was stopped with status %d' % model.status)
         exit(0)
     #print('The model is infeasible; computing IIS')
-    #m.computeIIS()
-    #print('\nThe following constraint(s) cannot be satisfied:')
-    #for c in m.getConstrs():
+    #model.computeIIS()
+    #print('\nThe following constraint(s) cannot be satisfied:')s
+    #for c in model.getConstrs():
     #    if c.IISConstr:
     #        print('%s' % c.constrName)     
     
     #return the model with the fixed solution
-    return m, mapping
+    return model, mapping
 
-def get_Performance(mapping, letters, p_bigram, performance, azerty):
+
+def get_objectives(mapping, w_p, w_a, w_f, w_e, level_cost, neighborhood_size, quadratic=0):
+    """
+        A wrapper for the _get_objectives function to use the standard test variabels
+    """
+    azerty,\
+    characters,\
+    keyslots,\
+    letters,\
+    p_single, p_bigram,\
+    performance,\
+    similarity_c_c, similarity_c_l,\
+    distance_level_0, distance_level_1,\
+    ergonomics\
+     = create_test_model(level_cost)
+                   
+    return _get_objectives(mapping, w_p, w_a, w_f, w_e, neighborhood_size,\
+                               azerty,\
+                               characters,\
+                               keyslots,\
+                               letters,\
+                               p_single, p_bigram,\
+                               performance,\
+                               similarity_c_c, similarity_c_l,\
+                               distance_level_0, distance_level_1,\
+                               ergonomics, quadratic=quadratic)
+
+def _get_objectives(mapping, w_p, w_a, w_f, w_e, neighborhood_size,\
+                               azerty,\
+                               characters,\
+                               keyslots,\
+                               letters,\
+                               p_single, p_bigram,\
+                               performance,\
+                               similarity_c_c, similarity_c_l,\
+                               distance_level_0, distance_level_1,\
+                               ergonomics, quadratic=0):
+    """
+        For a given mapping, returns the objective value for the given weights, and the individual objectives values for P,A,F,E
+    """
+    #remove letters from mapping
+    for m in mapping.keys():
+        if not m in characters:
+            mapping.pop(m)
+                
     P = quicksum(
             ((p_bigram[(c,l)]*performance[(s,azerty[l])]) + (p_bigram[(l,c)]*performance[(azerty[l],s)]))\
                 for l in letters for c, s in mapping.iteritems() 
         )
-    return P.getValue()
+
+    A = quicksum(
+            (p_single[c] + p_single[l])*similarity_c_l.get((c,l),0)*distance_level_0[s,azerty[l]] \
+                 for c, s in mapping.iteritems() for l in letters)       
+    if quadratic:         
+        #A += quicksum(
+        #    (p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]*(1-distance_level_1[(s1,s2)])*x[c1,s1]*x[c2,s2]\
+        #         for (c1,c2) in similarity_c_c for s1 in keyslots for s2 in keyslots)
+        #This part is a *bonus*. If one of those character pairs are close together (in the neighborhood), we give a bonus that corresponds
+        #to the frequency*(1-distance)        
+        A += -1*(quicksum(
+            (p_single[c1] + p_single[c2])*similarity_c_c.get((c1,c2),0)*(1-distance_level_0[(mapping[c1],mapping[c2])])\
+                 for (c1, s1) in mapping.iteritems() for (c2, s2) in mapping.iteritems() 
+            ))
+    F = quicksum(
+            #if that character was previously not on azerty, distance is 0.
+            p_single[c] * distance_level_1.get((s, azerty.get(c,"NaN")),0) \
+                 for c, s in mapping.iteritems()
+        )    
+        
+    E = quicksum(
+            ((p_bigram[(c,l)]*ergonomics[(s,azerty[l])]) + (p_bigram[(l,c)]*ergonomics[(azerty[l],s)]))\
+                for c, s in mapping.iteritems() for l in letters
+        )    
+    
+    return w_p*P.getValue()+ w_a*A.getValue()+w_f*F.getValue()+w_e*E.getValue(),P.getValue(), A.getValue(), F.getValue(), E.getValue()
+    
+    
+def neighborhood(s, n, keyslots, distances):
+    return [s2 for s2 in keyslots if distances[s,s2]<= n and (not s == s2)]
+    
+        
     
