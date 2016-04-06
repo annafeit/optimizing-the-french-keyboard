@@ -6,13 +6,19 @@ import matplotlib.patches as patches
 import seaborn as sns
 import codecs
 import re
+from optimize import *
 
 PYTHONIOENCODING="utf-8"
 
 
-def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1, objective="",\
+def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
+                 neighborhood_size=-1, level_cost=-1, quadratic=-1,\
+                 objective="",\
                  p=-1, a=-1, f=-1, e=-1, w_p=-1,w_a=-1, w_f=-1, w_e=-1 ):
-    
+    if objective==-1:        
+        if not (neighborhood_size == -1 or level_cost == -1):
+            obj, P, A, F, E = get_objectives(mapping, w_p, w_a, w_f, w_e, level_cost, neighborhood_size, quadratic=quadratic)
+                    
     if azerty == -1:
         azerty = pd.read_csv("input\\azerty.csv", index_col=1, sep="\t", encoding='utf-8', quoting=3).to_dict()["keyslot"]
     if numbers == -1:
@@ -206,8 +212,7 @@ def log_mapping(mapping, path):
     df.to_csv(path, sep=str(separator), quoting=3, encoding="utf-8")
 
 
-def create_map_from_mst(path):
-    path = "mappings\\solution_3.3184.mst"
+def create_map_from_mst(path):    
     mst = codecs.open(path, 'r', encoding="utf-8")
     first_line = mst.readline()
     parts = first_line.split(" ")
@@ -220,4 +225,42 @@ def create_map_from_mst(path):
         if var_val[1] == "1":
             maps = var_val[0].split("_to_")
             mapping[maps[0]] = maps[1]
+    return mapping, objective
+
+def create_map_from_reformulation(path): 
+    """ 
+        creates the mapping from the refomulated solution .mst file
+    """
+    #read in characters in keyslots
+    with codecs.open('input\\characters.txt', encoding='utf-8') as f:
+        characters = f.read().splitlines()
+    with codecs.open('input\\variable_slots.txt', encoding='utf-8') as f:    
+        keyslots = f.read().splitlines()   
+    numbers = pd.read_csv("input\\numbers.csv", index_col=1, sep="\t", encoding='utf-8', quoting=3).to_dict()["keyslot"]
+    #remove number keys from free keyslots
+    for n_slot in numbers.values():        
+        keyslots.remove(n_slot)
+
+    #read in mst file line by line and create mapping
+    mst = codecs.open(path, 'r', encoding="utf-8")
+    first_line = mst.readline()
+    parts = first_line.split(" ")
+    objective = float(parts[-1])
+    all_lines = mst.read().splitlines()
+
+    mapping = {}
+    for line in all_lines:        
+        var_val = line.split(" ")
+        variable = var_val[0]
+        #take only "x" decision variables which are set to 1
+        if var_val[1] == "1" and variable[0] =="x":
+            #decode number
+            maps = variable[2:-1].split(",")
+            c_number = int(maps[0])
+            s_number = int(maps[1])
+            #map number to character/keyslot
+            if c_number < len(characters):
+                character = characters[c_number]
+                slot = keyslots[s_number]
+                mapping[character] = slot
     return mapping, objective
