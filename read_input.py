@@ -1,5 +1,7 @@
 import codecs
 import pandas as pd
+import unicodedata
+import numpy as np
 
 #File names for input values
 _keyslots_file = 'input\\variable_slots.txt'
@@ -9,8 +11,8 @@ _azerty_file = "input\\azerty.csv"
 _similarity_c_c_file = 'input\\similarity_c_c_binary.xlsx'
 _similarity_c_l_file = 'input\\similarity_c_l_binary.xlsx'
 _distance_file = "input\\distance.xlsx"
-_frequency_letter_file = "input\\frequency_letters.csv"
-_frequency_bigram_file = "input\\frequency_bigrams.csv"
+_frequency_letter_file = "input\\frequency_letters_bepo.csv"
+_frequency_bigram_file = "input\\frequency_bigrams_bepo.csv"
 _ergonomics_file = "input\\ergonomics.csv"
 _performance_file = "input\\performance.csv"
 
@@ -95,14 +97,116 @@ def get_probabilities():
     """
         Returns the letter and bigram level probabilities in form of a dictionary. 
         Both contain the frequencies of both, letters and characters, as well as letter-character and character-character pairs
+        TODO: what do we do with accent + space?
     """
-    p_single = pd.read_csv(_frequency_letter_file, sep="\t", encoding="utf-8", index_col=0, quoting=3)
-    p_single.index=p_single.index.str.strip()
-    p_single = p_single.to_dict()["frequency"]
+    #TODO: adapt probabilities of composable characters to character list. 
+    #if letter uses accent and accented letter is not in character list, add to probability of dead key. 
+    # Also use this to give warning if a certain character is not in character list but in input list
+    characters = get_characters()
+    letters = get_letters()
+    all_chars = characters + letters
     
-    p_bigram = _read_tuple_list_to_dict(_frequency_bigram_file)
+    #1. read the frequencies from the corresponding files as they are
+    p_single = pd.read_csv(_frequency_letter_file, sep=" ", encoding="utf-8", index_col=0, quoting=3)
+    p_single = p_single.to_dict()[u'frequency']
     
-    return p_single, p_bigram
+    p_bigrams_all = _read_tuple_list_to_dict(_frequency_bigram_file)
+    
+    #2. go through characters and letters and check if they are available in dict. If not add 0 probability. 
+    # For each deadkey in the character list, sum up the probabilities of letters composed with the deadkey
+    for c1 in all_chars:
+        #single letter probabilities
+        if not c1 in p_single:
+            if c1[-1] == "d":
+                #deadkey: sum up all character frequencies composed of this deadkey and not in characters
+                c1_p = 0
+                for k in p_single.keys():
+                    if not k in all_chars:                       
+                        if  _is_composed_of(c1[0], k):
+                            #add this letter's probability to deadkey probability
+                            print c1 +" composes "+k
+                            c1_p += p_single[k]
+                p_single[c1] = c1_p
+            else:
+                #add 0
+                p_single[c1] = 0
+    #Normalize again
+    s = np.sum(p_single.values())
+    p_single_normalized = {c: v/float(s) for c, v in p_single.iteritems()}
+    
+    #3. go through bigrams and correct them accordign to the given characters, 
+    #that is letter pairs with accented characters need to be distributed to other letter pairs accoridng to the 
+     #keypresses that needed to be made.  
+    p_bigrams = {}
+    for (c1,c2) in p_bigrams_all.keys():
+        if c1 in all_chars and c2 in all_chars:
+            p_bigrams[(c1,c2)] = p_bigrams_all[(c1,c2)]
+        else:
+            c1_d = _decompose(c1)
+            c2_d = _decompose(c2)
+
+            #check if c1 is a fixed letter or to-be-mapped character. If not check its decomposition.
+            if not c1 in all_chars:
+                #check if its a composed letter. If not we don't care about it
+                if len(c1_d)>1:                
+                    c1_1 = c1_d[0]                
+                    c1_2 = c1_d[1]         
+                    #store bigram for the composition, if they are in the list. Else ignore.
+                    if c1_1 in all_chars and c1_2 in all_chars:
+                        if (c1_1, c1_2) in p_bigrams:
+                            p_bigrams[(c1_1, c1_2)] += p_bigrams_all[(c1, c2)]
+                        else:
+                            p_bigrams[(c1_1, c1_2)] = p_bigrams_all[(c1, c2)]
+                            
+                    #now check transition to second letter
+                    if len(c2_d) == 1 and c2_d in all_chars:
+                        if (c1_2, c2) in p_bigrams:
+                            p_bigrams[(c1_2, c2)] += p_bigrams_all[(c1, c2)]
+                        else:
+                            p_bigrams[(c1_2, c2)] = p_bigrams_all[(c1, c2)]
+                    elif len(c2_d)>1:
+                        #decompose again
+                        c2_1 = c2_d[0]                
+                        c2_2 = c2_d[1]  
+                        #add transition c1_2 - c2_1:
+                        if c1_2 in all_chars and c2_1 in all_chars:
+                            if (c1_2, c2_1) in p_bigrams:
+                                p_bigrams[(c1_2, c2_1)] += p_bigrams_all[(c1, c2)]
+                            else:
+                                p_bigrams[(c1_2, c2_1)] = p_bigrams_all[(c1, c2)]
+                        # add transition c2_1 - c2_2:
+                        if c2_1 in all_chars and c2_2 in all_chars:
+                            if (c2_1, c2_2) in p_bigrams:
+                                p_bigrams[(c2_1, c2_2)] += p_bigrams_all[(c1, c2)]
+                            else:
+                                p_bigrams[(c2_1, c2_2)] = p_bigrams_all[(c1, c2)]
+                else:
+                    print "We don't care about", c1
+            elif not c2 in all_chars:
+                if len(c2_d)>1:
+                    c2_1 = c2_d[0]                
+                    c2_2 = c2_d[1]  
+                    #add transition c1 - c2_1:
+                    if c1 in all_chars and c2_1 in all_chars:
+                        if (c1, c2_1) in p_bigrams:
+                            p_bigrams[(c1, c2_1)] += p_bigrams_all[(c1, c2)]
+                        else:
+                            p_bigrams[(c1, c2_1)] = p_bigrams_all[(c1, c2)]
+                        # add transition c2_1 - c2_2:
+                        if c2_1 in all_chars and c2_2 in all_chars:
+                            if (c2_1, c2_2) in p_bigrams:
+                                p_bigrams[(c2_1, c2_2)] += p_bigrams_all[(c1, c2)]
+                            else:
+                                p_bigrams[(c2_1, c2_2)] = p_bigrams_all[(c1, c2)]
+                else:
+                    print "We don't care about", c2
+    s = np.sum(p_bigrams.values())
+    p_bigrams_normalized = {(c1,c2): v/float(s) for (c1,c2), v in p_bigrams.iteritems()}
+                
+                
+            
+    
+    return p_single_normalized, p_bigrams_normalized
 
 def get_ergonomics():
     """
@@ -119,6 +223,14 @@ def get_performance():
     performance = _read_tuple_list_to_dict(_performance_file)
     return performance 
 
+def _decompose(c):
+    c_d = unicodedata.normalize('NFKD', c)
+    special_char_list = {"^": "0302", "~":"0303"}
+    for i in range(0,len(c_d)):
+        if c_d[i] in special_char_list:
+            c_d[i] = special_char_list[c_d[i]]
+    return c_d
+        
 def _read_distance_matrix(path, level_cost, recompute=0):
     """
         reads the distance between the keys from the excel file. If the file is empty (or recompute is set) it creates the distance matrix
@@ -209,3 +321,25 @@ def _read_tuple_list_to_dict(path):
             parts = l.split(" ")
             p_bigrams[(parts[0], parts[1])] = float(parts[2])
     return p_bigrams
+
+def _is_composed_of(deadkey, character):
+    """
+        checks if the given character is a composed character and if it is composed with the given deadkey
+    """
+    if not character == "space":
+        special_char_list = {"^": "0302", "~":"0303"}
+        if len(character)>1:
+            #has multiple characters in it, check if the deadkey is somehwere in there
+            for c in character:
+                res = _is_composed_of(deadkey,c)
+                if res:
+                    return res
+        if unicodedata.decomposition(character) == "":
+            return 0
+        else:
+            if deadkey in special_char_list:
+                deadkey_code = special_char_list[deadkey]
+            else:
+                deadkey_code = unicodedata.decomposition(deadkey)[-4:]
+            character_code = unicodedata.decomposition(character)[-4:]
+            return deadkey_code == character_code

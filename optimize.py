@@ -44,7 +44,7 @@ def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, level_cost, neighborhood_size
                  objective=obj,\
                  p=P, a=A, f=F, e=E, w_p=w_p,w_a=w_a, w_f=w_f, w_e=w_e)
 
-    log_mapping(mapping, "mappings\\final.csv")
+    log_mapping(mapping, "mappings\\final.mst", objective=obj)
     
     return mapping
     

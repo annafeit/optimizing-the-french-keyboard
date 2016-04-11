@@ -123,6 +123,23 @@ void printFixations( const std::vector<LetterSlot>& F ) {
   }
 }
 
+void read_weights() {
+  std::vector<double> weights;
+  double w_p;
+  std::cin >> w_p;
+  weights.push_back(w_p);
+  double w_a;
+  std::cin >> w_a;
+  weights.push_back(w_a);
+  double w_f;
+  std::cin >> w_f;
+  weights.push_back(w_f);
+  double w_e;
+  std::cin >> w_e;
+  weights.push_back(w_e);
+
+  
+}
 void scale( Matrix& M ) {
   double scale;
   std::cin >> scale;

@@ -205,12 +205,21 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
     if not plotname=="":
         fig.savefig(plotname, dpi=300, bbox_inches='tight')	    
     
-def log_mapping(mapping, path):
-    separator = "\t"
-    df = pd.DataFrame()
-    df = df.from_dict(mapping, orient="index")
-    df.to_csv(path, sep=str(separator), quoting=3, encoding="utf-8")
-
+def log_mapping(mapping, path, objective=""):
+    """
+        Stores the given mapping in an mst file with the given path. Format:
+        character key
+    """
+    mstfile = open(path, 'w')
+    varlist = model.getVars()
+    soln    = model.cbGetSolution(varlist)
+    if not objective=="":
+        mstfile.write('# Objective %e\n' %(obj))
+    mapping = {}    
+    for character, key in mapping.iteritems():        
+        mstfile.write('%s %i\n' % (character, key))
+        
+    mstfile.close()
 
 def create_map_from_mst(path):    
     mst = codecs.open(path, 'r', encoding="utf-8")

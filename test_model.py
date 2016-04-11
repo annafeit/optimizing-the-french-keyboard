@@ -74,7 +74,7 @@ def create_dummy_values_performance_ergonomics_probability(randomize=False):
     df = pd.DataFrame()
     df = df.from_dict(p_single,orient="index")
     df.columns = ["frequency"]
-    df.to_csv("input\\frequency_letters.csv", sep="\t", encoding="utf-8", quoting=3)
+    df.to_csv("input\\frequency_letters.csv", sep=" ", encoding="utf-8", quoting=3)
 
     #create dummy data for bigram frequency
     if randomize:        
@@ -87,7 +87,8 @@ def create_dummy_values_performance_ergonomics_probability(randomize=False):
         bigram_file.writelines(p_bigrams_strings)
 
     #Ergonomics (c, l)-> e
-    #TODO    
+    #Assumption: Movements to or from extreme keys are bad, that is keys in upper row and keys with in column >10
+    extreme_keys = [k for k in keyslots if (k[0] == "E") or (int(k[1:3]) > 10)]
     ergonomics = {}
     for s in keyslots:
         for l in letters:
@@ -96,8 +97,12 @@ def create_dummy_values_performance_ergonomics_probability(randomize=False):
             if randomize:
                 r1 = random.random()
                 r2 = random.random()     
-            ergonomics[(s,azerty[l])]= r1*0.2
-            ergonomics[(azerty[l],s)]= r2*0.2
+            if s in extreme_keys and azerty[l] in extreme_keys:
+                ergonomics[(s,azerty[l])]= r1*0.4
+            elif s in extreme_keys or azerty[l] in extreme_keys:
+                ergonomics[(s,azerty[l])]= r1*0.3
+            else:
+                ergonomics[(azerty[l],s)]= r2*0.2
     ergonomic_strings = ["%s %s %f\n"%(s,l,n) for (s,l), n in ergonomics.iteritems()]
     ergonomics_strings = [s.encode("utf-8") for s in ergonomic_strings]
     with open("input\\ergonomics.csv", 'w') as ergonomic_file:
