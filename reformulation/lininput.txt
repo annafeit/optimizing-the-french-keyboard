@@ -1,0 +1,22 @@
+# number of letters and keys
+4
+# probabilities (not normalized)
+1 1 1 1
+1 1 1 1
+1 1 1 1
+1 1 1 1
+# inter-key intervals (in milliseconds)
+1 1 1 1
+1 1 1 1
+1 1 1 1
+1 1 1 1
+# fixation of the spacebar to the bottom
+1
+3 3
+# scale for rounding down the probabilities
+1e6
+# linear costs
+100 100 100 100
+100 100 100 100
+100 100 100 100
+100 100 100 100

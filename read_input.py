@@ -5,11 +5,12 @@ import numpy as np
 
 #File names for input values
 _keyslots_file = 'input\\variable_slots.txt'
+_numbers_file = 'input\\numbers.csv'
 _letter_file = 'input\\letters.txt'
 _character_file = 'input\\characters.txt'
 _azerty_file = "input\\azerty.csv"
 _similarity_c_c_file = 'input\\similarity_c_c_binary.xlsx'
-_similarity_c_l_file = 'input\\similarity_c_l_binary.xlsx'
+_similarity_c_l_file = 'input\\similarity_c_l.xlsx'
 _distance_file = "input\\distance.xlsx"
 _frequency_letter_file = "input\\frequency_letters_bepo.csv"
 _frequency_bigram_file = "input\\frequency_bigrams_bepo.csv"
@@ -52,8 +53,7 @@ def get_keyslots():
         keyslots_file = f.read().splitlines()
     keyslots = [c.strip() for c in keyslots_file]    
     
-    numbers = pd.read_csv(_keyslots_file, index_col=1, sep="\t", encoding='utf-8', quoting=3)
-    numbers.index=numbers.index.str.strip()
+    numbers = pd.read_csv(_numbers_file, index_col=1, sep="\t", encoding='utf-8', quoting=3)
     numbers = numbers.to_dict()["keyslot"]
     
     for n_slot in numbers.values():        
@@ -97,7 +97,9 @@ def get_probabilities():
     """
         Returns the letter and bigram level probabilities in form of a dictionary. 
         Both contain the frequencies of both, letters and characters, as well as letter-character and character-character pairs
+        The letters and characters that have no frequency available, get half of the lowest frequency
         TODO: what do we do with accent + space?
+        
     """
     #TODO: adapt probabilities of composable characters to character list. 
     #if letter uses accent and accented letter is not in character list, add to probability of dead key. 
@@ -114,6 +116,7 @@ def get_probabilities():
     
     #2. go through characters and letters and check if they are available in dict. If not add 0 probability. 
     # For each deadkey in the character list, sum up the probabilities of letters composed with the deadkey
+    minimum = np.min(p_single.values())
     for c1 in all_chars:
         #single letter probabilities
         if not c1 in p_single:
@@ -126,10 +129,13 @@ def get_probabilities():
                             #add this letter's probability to deadkey probability
                             print c1 +" composes "+k
                             c1_p += p_single[k]
+                if c1_p == 0:
+                    # assign a minimum probability
+                    c1_p = 0.5*minimum 
                 p_single[c1] = c1_p
             else:
                 #add 0
-                p_single[c1] = 0
+                p_single[c1] = 0.5*minimum              
     #Normalize again
     s = np.sum(p_single.values())
     p_single_normalized = {c: v/float(s) for c, v in p_single.iteritems()}
@@ -200,12 +206,19 @@ def get_probabilities():
                                 p_bigrams[(c2_1, c2_2)] = p_bigrams_all[(c1, c2)]
                 else:
                     print "We don't care about", c2
+    
+    # Give 0.5* lowest probability to those pairs that have no frequency
+    minimum = np.min(p_bigrams.values())
+    for c in characters:
+        for l in letters:
+            if (c,l) not in p_bigrams:
+                p_bigrams[c,l] = 0.5*minimum
+            if (l,c) not in p_bigrams:
+                p_bigrams[l,c] = 0.5*minimum
+    # normalize
     s = np.sum(p_bigrams.values())
     p_bigrams_normalized = {(c1,c2): v/float(s) for (c1,c2), v in p_bigrams.iteritems()}
                 
-                
-            
-    
     return p_single_normalized, p_bigrams_normalized
 
 def get_ergonomics():
@@ -225,7 +238,7 @@ def get_performance():
 
 def _decompose(c):
     c_d = unicodedata.normalize('NFKD', c)
-    special_char_list = {"^": "0302", "~":"0303"}
+    special_char_list = {"^": "0302", "~":"0303", "`":"0300"}
     for i in range(0,len(c_d)):
         if c_d[i] in special_char_list:
             c_d[i] = special_char_list[c_d[i]]
@@ -327,7 +340,7 @@ def _is_composed_of(deadkey, character):
         checks if the given character is a composed character and if it is composed with the given deadkey
     """
     if not character == "space":
-        special_char_list = {"^": "0302", "~":"0303"}
+        special_char_list = {"^": "0302", "~":"0303", "`":"0300"}
         if len(character)>1:
             #has multiple characters in it, check if the deadkey is somehwere in there
             for c in character:

@@ -6,18 +6,26 @@ import matplotlib.patches as patches
 import seaborn as sns
 import codecs
 import re
-from optimize import *
+from objectives import *
 
 PYTHONIOENCODING="utf-8"
 
 
 def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
-                 neighborhood_size=-1, level_cost=-1, quadratic=-1,\
-                 objective="",\
+                 level_cost=-1, quadratic=-1,\
+                 objective=-1,\
                  p=-1, a=-1, f=-1, e=-1, w_p=-1,w_a=-1, w_f=-1, w_e=-1 ):
+    """
+    Plots the given mapping.
+    Mapping can be a path to the mapping file, created by the reformulation, or an actual mapping. 
+    If no objective is given, it computes the objective values.
+    """
+    if type(mapping)==string:       
+        mapping, obj = create_map_from_reformulation(path)
+        
     if objective==-1:        
-        if not (neighborhood_size == -1 or level_cost == -1):
-            obj, P, A, F, E = get_objectives(mapping, w_p, w_a, w_f, w_e, level_cost, neighborhood_size, quadratic=quadratic)
+        if not level_cost == -1:
+            objective, p, a, f, e = get_objectives(mapping, w_p, w_a, w_f, w_e, level_cost, quadratic=quadratic)
                     
     if azerty == -1:
         azerty = pd.read_csv("input\\azerty.csv", index_col=1, sep="\t", encoding='utf-8', quoting=3).to_dict()["keyslot"]
@@ -192,7 +200,7 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
             color=c        
             )
     title = ""
-    if not objective=="":
+    if not objective==-1:
         #print objective values
         title = "Objective value: %.3f"%objective
     if not (a==-1 or e==-1 or f==-1 or p==-1):

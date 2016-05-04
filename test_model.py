@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import codecs
 import random
-
+from read_input import *
 PYTHONIOENCODING="utf-8"
 
 
@@ -15,7 +15,7 @@ def create_test_model(level_cost):
     keyslots = get_keyslots()
     
     print "read in: similarity values"
-    similarity_c_c = get_characte_similarities()
+    similarity_c_c = get_character_similarities()
     similarity_c_l = get_character_letter_similarities()
     
     print "read in: distance values"    
@@ -99,9 +99,12 @@ def create_dummy_values_performance_ergonomics_probability(randomize=False):
                 r2 = random.random()     
             if s in extreme_keys and azerty[l] in extreme_keys:
                 ergonomics[(s,azerty[l])]= r1*0.4
+                ergonomics[(azerty[l], s)]= r2*0.4
             elif s in extreme_keys or azerty[l] in extreme_keys:
                 ergonomics[(s,azerty[l])]= r1*0.3
+                ergonomics[(azerty[l], s)]= r1*0.3
             else:
+                ergonomics[(s,azerty[l])]= r1*0.2
                 ergonomics[(azerty[l],s)]= r2*0.2
     ergonomic_strings = ["%s %s %f\n"%(s,l,n) for (s,l), n in ergonomics.iteritems()]
     ergonomics_strings = [s.encode("utf-8") for s in ergonomic_strings]
@@ -113,22 +116,23 @@ def create_dummy_values_performance_ergonomics_probability(randomize=False):
     performance = {}
     for s in keyslots:
         for l in letters:
+            s2 = azerty[l]
             r1 = 1
             r2 = 1
             if randomize:
                 r1 = random.random()
                 r2 = random.random()             
-            performance[(s,azerty[l])]= r1*0.2 
-            performance[(azerty[l],s)]= r2*0.2 
+            performance[(s,s2)]= r1*0.2 
+            performance[(s2, s)]= r2*0.2 
             if s[4:] == "Shift":
-                performance[(s,azerty[l])]+= 0.1 
-                performance[(azerty[l],s)]+= 0.1
+                performance[(s,s2)]+= 0.1 
+                performance[(s2,s)]+= 0.1
             if s[4:] == "Alt":
-                performance[(s,azerty[l])]+= 0.2 
-                performance[(azerty[l],s)]+= 0.2
+                performance[(s,s2)]+= 0.2 
+                performance[(s2,s)]+= 0.2
             if s[4:] == "Alt_Shift":
-                performance[(s,azerty[l])]+= 0.3 
-                performance[(azerty[l],s)]+= 0.3
+                performance[(s,s2)]+= 0.3 
+                performance[(s2,s)]+= 0.3
     performance_string = ["%s %s %f\n"%(s,l,n) for (s,l), n in performance.iteritems()]
     performance_strings = [s.encode("utf-8") for s in performance_string]
     with open("input\\performance.csv", 'w') as performance_file:
