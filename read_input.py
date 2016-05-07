@@ -14,7 +14,7 @@ _similarity_c_l_file = 'input\\similarity_c_l.xlsx'
 _distance_file = "input\\distance.xlsx"
 _frequency_letter_file = "input\\frequency_letters_bepo.csv"
 _frequency_bigram_file = "input\\frequency_bigrams_bepo.csv"
-_ergonomics_file = "input\\ergonomics.csv"
+_ergonomics_file = "input\\ergonomics_antti.csv"
 _performance_file = "input\\performance.csv"
 
 def get_azerty():
