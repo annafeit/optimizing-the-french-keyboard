@@ -7,6 +7,7 @@ import seaborn as sns
 import codecs
 import re
 from objectives import *
+from read_input import *
 
 PYTHONIOENCODING="utf-8"
 
@@ -20,15 +21,18 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
     Mapping can be a path to the mapping file, created by the reformulation, or an actual mapping. 
     If no objective is given, it computes the objective values.
     """
-    if type(mapping)==string:       
-        mapping, obj = create_map_from_reformulation(path)
+    if type(mapping)==str:
+        if mapping.split(".")[-1] == "mst":
+            mapping, obj = create_map_from_reformulation(mapping)
+        if mapping.split(".")[-1] == "txt":
+            mapping = create_map_from_txt(mapping)
         
-    if objective==-1:        
+    if objective==-1:          
         if not level_cost == -1:
             objective, p, a, f, e = get_objectives(mapping, w_p, w_a, w_f, w_e, level_cost, quadratic=quadratic)
                     
     if azerty == -1:
-        azerty = pd.read_csv("input\\azerty.csv", index_col=1, sep="\t", encoding='utf-8', quoting=3).to_dict()["keyslot"]
+        azerty = get_azerty()
     if numbers == -1:
         numbers = pd.read_csv("input\\numbers.csv", index_col=1, sep="\t", encoding='utf-8', quoting=3).to_dict()["keyslot"]
     if letters == -1:
@@ -215,34 +219,33 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
     
 def log_mapping(mapping, path, objective=""):
     """
-        Stores the given mapping in an mst file with the given path. Format:
+        Stores the given mapping in an txt file with the given path. Format:
         character key
     """
-    mstfile = open(path, 'w')
-    varlist = model.getVars()
-    soln    = model.cbGetSolution(varlist)
+    mstfile = codecs.open(path, 'w', encoding="utf-8")
     if not objective=="":
         mstfile.write('# Objective %e\n' %(obj))
-    mapping = {}    
     for character, key in mapping.iteritems():        
-        mstfile.write('%s %i\n' % (character, key))
-        
+        mstfile.write('%s %s\n' % (character, key))       
     mstfile.close()
 
-def create_map_from_mst(path):    
-    mst = codecs.open(path, 'r', encoding="utf-8")
-    first_line = mst.readline()
-    parts = first_line.split(" ")
-    objective = float(parts[-1])
+def create_map_from_txt(path):    
+    """
+    Reads a mapping from a file
+    Each line must have the form character - space - key
+    lines starting with # are ignored
+    """
+    mst = codecs.open(path, 'r', encoding="utf-8")    
     all_lines = mst.read().splitlines()
 
     mapping = {}
     for line in all_lines:
-        var_val = line.split(" ")
-        if var_val[1] == "1":
-            maps = var_val[0].split("_to_")
-            mapping[maps[0]] = maps[1]
-    return mapping, objective
+        if not line[0] == "#":
+            var_val = line.split(" ")               
+            mapping[var_val[0]] = var_val[1]
+            
+    mst.close()
+    return mapping
 
 def create_map_from_reformulation(path): 
     """ 

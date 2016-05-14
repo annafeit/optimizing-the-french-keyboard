@@ -3,7 +3,7 @@ from test_model import*
 import numpy as np 
 PYTHONIOENCODING="utf-8"
 
-def get_objectives(mapping, w_p, w_a, w_f, w_e, level_cost, neighborhood_size=-1, quadratic=0):
+def get_objectives(mapping, w_p, w_a, w_f, w_e, level_cost, quadratic=0):
     """
         A wrapper for the _get_objectives function to use the standard test variables
     """
@@ -18,7 +18,7 @@ def get_objectives(mapping, w_p, w_a, w_f, w_e, level_cost, neighborhood_size=-1
     ergonomics\
      = create_test_model(level_cost)
                    
-    return _get_objectives(mapping, w_p, w_a, w_f, w_e, neighborhood_size,\
+    return _get_objectives(mapping, w_p, w_a, w_f, w_e, \
                                azerty,\
                                characters,\
                                keyslots,\
@@ -29,7 +29,7 @@ def get_objectives(mapping, w_p, w_a, w_f, w_e, level_cost, neighborhood_size=-1
                                distance_level_0, distance_level_1,\
                                ergonomics, quadratic=quadratic)
 
-def _get_objectives(mapping, w_p, w_a, w_f, w_e, neighborhood_size,\
+def _get_objectives(mapping, w_p, w_a, w_f, w_e,\
                                azerty,\
                                characters,\
                                keyslots,\
@@ -38,7 +38,7 @@ def _get_objectives(mapping, w_p, w_a, w_f, w_e, neighborhood_size,\
                                performance,\
                                similarity_c_c, similarity_c_l,\
                                distance_level_0, distance_level_1,\
-                               ergonomics, quadratic=0):
+                               ergonomics, quadratic=1):
     """
         For a given mapping, returns the objective value for the given weights, and the individual objectives values for P,A,F,E
     """
@@ -54,13 +54,15 @@ def _get_objectives(mapping, w_p, w_a, w_f, w_e, neighborhood_size,\
                                distance_level_0, distance_level_1,\
                                ergonomics)
         
-    #remove letters from mapping
+    #remove letters from mapping that are not in characters list
     for m in mapping.keys():
         if not m in characters:
-            mapping.pop(m)
+            mapping.pop(m)  
+            print("%s not in the to-be-mapped character set"%m)
 
     P=0
     A=0
+    A_q = 0
     F=0
     E=0
     for c, s in mapping.iteritems():
@@ -70,20 +72,13 @@ def _get_objectives(mapping, w_p, w_a, w_f, w_e, neighborhood_size,\
         E+=x_E[c,s]
     print A    
     if quadratic:    
-        if neighborhood_size==-1:
-            for (c1,c2) in similarity_c_c:
+        for (c1,c2) in similarity_c_c:
+            if c1 in mapping and c2 in mapping:
                 s1 = mapping[c1]
                 s2 = mapping[c2]
-                A += (p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]*(distance_level_1[(s1,s2)])
-                     
-        #This part is a *bonus*. If one of those character pairs are close together (in the neighborhood), we give a bonus that corresponds
-        #to the frequency*(1-distance)        
-        else:
-            for (c1, s1) in mapping.iteritems():
-                s1 = mapping[c1]
-                s2 = mapping[c2]
-                A += -1* (p_single[c1] + p_single[c2])*similarity_c_c.get((c1,c2),0)*(1-distance_level_0[(mapping[c1],mapping[c2])])
-                          
+                A += (p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]*(distance_level_1[(s1,s2)])  
+                A_q+=(p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]*(distance_level_1[(s1,s2)])  
+    print A_q
     objective =  w_p*P + w_a*A + w_f*F + w_e*E
     return objective, P, A, F, E
     

@@ -47,7 +47,7 @@ def create_reformulation_input(w_P, w_A, w_F, w_E, level_cost):
                                                ergonomics)
     
     #Writes an input file for the reformualtion of the quadratic term
-    f = codecs.open("reformulation_input.txt", 'w', encoding="utf-8")
+    f = codecs.open("reformulation\\reformulation_input.txt", 'w', encoding="utf-8")
     f.write("# number of letters and keys\n")
     f.write(str(len(keyslots))+"\n")
     f.write("# w_A*probabilities*similarities\n")
@@ -96,7 +96,7 @@ def create_reformulation_input(w_P, w_A, w_F, w_E, level_cost):
     for c in characters:
         lin_strings = []
         for s in keyslots:        
-            l = linear_cost[(c,s)]
+            l = linear_costs[(c,s)]
             lin_strings.append("%f"%l) 
 
         f.write(" ".join(lin_strings) + "\n")
