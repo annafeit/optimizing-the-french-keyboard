@@ -51,12 +51,12 @@ def create_reformulation_input(w_P, w_A, w_F, w_E, level_cost):
     f.write("# number of letters and keys\n")
     f.write(str(len(keyslots))+"\n")
     f.write("# w_A*probabilities*similarities\n")
+    nonzeros = 0
     for (c1,c2) in similarity_c_c:
             #Compute nonzeros for normalization
-            if c1 in mapping and c2 in mapping:
-                v = (p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]
-                if v > 0:
-                    nonzeros += 1
+            v = (p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]
+            if v > 0:
+                nonzeros += 1
     for c1 in characters:
         prob_strings = []
         for c2 in characters:
