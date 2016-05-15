@@ -240,8 +240,8 @@ def create_map_from_txt(path):
 
     mapping = {}
     for line in all_lines:
-        if not line[0] == "#":
-            var_val = line.split(" ")               
+        if not line[0] == "#":            
+            var_val = line.split(" ") 
             mapping[var_val[0]] = var_val[1]
             
     mst.close()

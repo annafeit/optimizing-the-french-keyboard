@@ -51,12 +51,18 @@ def create_reformulation_input(w_P, w_A, w_F, w_E, level_cost):
     f.write("# number of letters and keys\n")
     f.write(str(len(keyslots))+"\n")
     f.write("# w_A*probabilities*similarities\n")
+    for (c1,c2) in similarity_c_c:
+            #Compute nonzeros for normalization
+            if c1 in mapping and c2 in mapping:
+                v = (p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]
+                if v > 0:
+                    nonzeros += 1
     for c1 in characters:
         prob_strings = []
         for c2 in characters:
             if(c1,c2) in similarity_c_c.keys():
                 #Don#t forget the weighting
-                p = w_A*(p_single[c1] + p_single[c2])*similarity_c_c[c1,c2]
+                p = w_A*2*(1/float(nonzeros))*(p_single[c1] + p_single[c2])*similarity_c_c[c1,c2]
                 prob_strings.append("%f"%p)
             else:
                 prob_strings.append("0")
@@ -74,7 +80,7 @@ def create_reformulation_input(w_P, w_A, w_F, w_E, level_cost):
             prob_strings.append("0")
         f.write(" ".join(prob_strings) + "\n")
 
-    #write the w_A weighted distances with linear cost added on diagonal
+    #write the distances with linear cost added on diagonal
     f.write("# distances\n")
     distances = distance_level_0
 

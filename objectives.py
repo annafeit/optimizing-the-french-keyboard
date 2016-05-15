@@ -62,23 +62,27 @@ def _get_objectives(mapping, w_p, w_a, w_f, w_e,\
 
     P=0
     A=0
-    A_q = 0
     F=0
     E=0
     for c, s in mapping.iteritems():
         P+=x_P[c,s]            
         A+=x_A[c,s]
         F+=x_F[c,s]
-        E+=x_E[c,s]
-    print A    
-    if quadratic:    
+        E+=x_E[c,s]    
+    if quadratic:   
+        nonzeros = 0
+        for (c1,c2) in similarity_c_c:
+            #Compute nonzeros for normalization
+            if c1 in mapping and c2 in mapping:
+                v = (p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]
+                if v > 0:
+                    nonzeros += 1
         for (c1,c2) in similarity_c_c:
             if c1 in mapping and c2 in mapping:
                 s1 = mapping[c1]
                 s2 = mapping[c2]
-                A += (p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]*(distance_level_1[(s1,s2)])  
-                A_q+=(p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]*(distance_level_1[(s1,s2)])  
-    print A_q
+                A += (2/ float(nonzeros))* (p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]*(distance_level_0[(s1,s2)])              
+    
     objective =  w_p*P + w_a*A + w_f*F + w_e*E
     return objective, P, A, F, E
     
@@ -95,7 +99,7 @@ def get_linear_costs(w_p, w_a, w_f, w_e,
                                ergonomics):
     
     """ computes the linear cost: for each linear variable x[c,s] compute the P, A, F and E term (as if it is chosen)
-        Returns the linear cost for each objective and the weighted sum
+        Returns the linear cost for each objective and the weighted sum.                
     """
 
     x_P = {} 
@@ -116,9 +120,9 @@ def get_linear_costs(w_p, w_a, w_f, w_e,
                     P += (p_bigram[(c,l)]*performance[(s,azerty[l])]) 
                 if (l,c) in p_bigram:
                     P += (p_bigram[(l,c)]*performance[(azerty[l],s)])            
-                #update association
+                #update association. This is symmetric, so we add it twice to make it comparable with the other scores
                 if (c,l) in similarity_c_l:
-                    A += (p_single[c] + p_single[l])*similarity_c_l[(c,l)]*distance_level_0[s,azerty[l]]    
+                    A += 2*((p_single[c] + p_single[l])*similarity_c_l[(c,l)]*distance_level_0[s,azerty[l]])
                 #update ergonomics
                 if (c,l) in p_bigram:                
                     E += (p_bigram[(c,l)]*ergonomics[(s,azerty[l])])
@@ -143,11 +147,17 @@ def get_linear_costs(w_p, w_a, w_f, w_e,
     return linear_cost, x_P, x_A, x_F, x_E
 
 def normalize_dict_values(d):
-        maximum = np.max(d.values())
-        minimum = np.min(d.values())
+    """
+    Normalizes all values to be between 0 and 1, then divides them by the number of non-zero values 
+    to make them comparable with association scores, for which many values are 0
+    """
+    nonzeros = len([v for v in d.values() if not v == 0])
+    maximum = np.max(d.values())
+    minimum = np.min(d.values())
 
-        for k, v in d.iteritems():
-            d[k] = v / float(maximum - minimum)
+    for k, v in d.iteritems():
+        d[k] = v / float(maximum - minimum)
+        d[k] = d[k] / float(nonzeros)
         return d
     
 def neighborhood(s, n, keyslots, distances):
