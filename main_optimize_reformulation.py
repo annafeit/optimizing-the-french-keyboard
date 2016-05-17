@@ -5,7 +5,7 @@ from read_input import *
 from plotting import *
 from reformulation_input import *
 
-%matplotlib inline
+
 PYTHONIOENCODING="utf-8"
 
 #Define the weights for:
