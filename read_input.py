@@ -61,7 +61,8 @@ def get_keyslots():
             keyslots.remove(n_slot)
         except ValueError:
             #do nothing
-        
+            continue
+            
     return keyslots
 
 def get_character_similarities():
