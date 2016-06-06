@@ -31,7 +31,7 @@ level_cost = {u'':0, u'Shift':1, u'Alt':2, u'Alt_Shift':3}
 create_reformulation_input(w_p, w_a, w_f, w_e, level_cost)
 
 #Call c++ code for creating the actual reformulation
-proc = subprocess.Popen('mycpp' + parameters,
+proc = subprocess.Popen('kaufmanbroeckx' + parameters,
                         shell=True,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
