@@ -12,8 +12,8 @@ _azerty_file = "input\\layouts\\azerty.csv"
 _similarity_c_c_file = 'input\\similarity_c_c_binary.xlsx'
 _similarity_c_l_file = 'input\\similarity_c_l.xlsx'
 _distance_file = "input\\distance.xlsx"
-_frequency_letter_file = "input\\frequency_letters_bepo.csv"
-_frequency_bigram_file = "input\\frequency_bigrams_bepo.csv"
+_frequency_letter_file = "input\\frequency_letters_mathieu.txt"
+_frequency_bigram_file = "input\\frequency_bigrams_mathieu.txt"
 _ergonomics_file = "input\\ergonomics_antti.csv"
 _performance_file = "input\\performance.csv"
 
@@ -56,8 +56,11 @@ def get_keyslots():
     numbers = pd.read_csv(_numbers_file, index_col=1, sep="\t", encoding='utf-8', quoting=3)
     numbers = numbers.to_dict()["keyslot"]
     
-    for n_slot in numbers.values():        
-        keyslots.remove(n_slot)
+    for n_slot in numbers.values(): 
+        try:
+            keyslots.remove(n_slot)
+        except ValueError:
+            #do nothing
         
     return keyslots
 

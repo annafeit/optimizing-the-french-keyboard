@@ -8,6 +8,11 @@ from reformulation_input import *
 
 PYTHONIOENCODING="utf-8"
 
+
+'''
+Defines weights and level costs, optimizes the reformulated problem and plots the results (with objectives according to the weights defined here)
+'''
+
 #Define the weights for:
 #w_p: Performance
 #w_a: Association
