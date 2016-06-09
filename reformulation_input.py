@@ -7,18 +7,14 @@ def create_reformulation_input(w_P, w_A, w_F, w_E, level_cost):
     """
         creates the file reformulation_input.txt which is used as input for the kaufmann-broeckx reformulation done in the C++ scripts.
     """
-    level_cost = {u'':0, u'Shift':1, u'Alt':2, u'Alt_Shift':3}
-    w_P = 0.25
-    w_A = 0.25
-    w_F = 0.25
-    w_E = 0.25
+    
     #Read in model
     print "read in: characters, keyslots and letters"
-    azerty = get_azerty()
+    
     letters = get_letters()
     characters = get_characters()
     keyslots = get_keyslots()
-
+    azerty = get_azerty()
     print "read in: similarity values"
     similarity_c_c = get_character_similarities()
     similarity_c_l = get_character_letter_similarities()
