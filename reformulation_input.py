@@ -4,6 +4,7 @@ import numpy as np
 PYTHONIOENCODING="utf-8"
 
 def create_reformulation_input(w_P, w_A, w_F, w_E, level_cost):
+    
     """
         creates the file reformulation_input.txt which is used as input for the kaufmann-broeckx reformulation done in the C++ scripts.
     """

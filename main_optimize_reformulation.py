@@ -8,6 +8,8 @@ from reformulation_input import *
 
 PYTHONIOENCODING="utf-8"
 
+if os.name != 'nt':
+    change_to_linux()
 
 '''
 Defines weights and level costs, optimizes the reformulated problem and plots the results (with objectives according to the weights defined here)

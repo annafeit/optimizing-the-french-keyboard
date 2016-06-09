@@ -3,7 +3,8 @@ import pandas as pd
 import unicodedata
 import numpy as np
 
-#File names for input values
+
+#File names for input values windows
 _keyslots_file = 'input\\variable_slots.txt'
 _numbers_file = 'input\\numbers.csv'
 _letter_file = 'input\\letters.txt'
@@ -16,6 +17,20 @@ _frequency_letter_file = "input\\frequency_letters_mathieu.txt"
 _frequency_bigram_file = "input\\frequency_bigrams_mathieu.txt"
 _ergonomics_file = "input\\ergonomics_antti.csv"
 _performance_file = "input\\performance.csv"
+
+def change_to_linux():
+    _keyslots_file = _keyslots_file.replace('\\', '/')
+    _numbers_file = _numbers_file.replace('\\', '/')
+    _letter_file = _letter_file.replace('\\', '/')
+    _character_file = _character_file.replace('\\', '/')
+    _azerty_file = _azerty_file.replace('\\', '/')
+    _similarity_c_c_file = _similarity_c_c_file.replace('\\', '/')
+    _similarity_c_l_file = _similarity_c_l_file.replace('\\', '/')
+    _distance_file = _distance_file.replace('\\', '/')
+    _frequency_letter_file = _frequency_letter_file.replace('\\', '/')
+    _frequency_bigram_file = _frequency_bigram_file.replace('\\', '/')
+    _ergonomics_file = _ergonomics_file.replace('\\', '/')
+    _performance_file = _performance_file.replace('\\', '/')
 
 def get_azerty():
     """
