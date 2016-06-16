@@ -3,6 +3,7 @@ from read_input import *
 from plotting import *
 from reformulation_input import *
 from evaluate_reformualtion_solution import * 
+import subprocess
 
 PYTHONIOENCODING="utf-8"
 
