@@ -5,32 +5,33 @@ import numpy as np
 
 
 #File names for input values windows
-_keyslots_file = 'input\\variable_slots.txt'
-_numbers_file = 'input\\numbers.csv'
-_letter_file = 'input\\letters.txt'
-_character_file = 'input\\characters.txt'
-_azerty_file = "input\\layouts\\azerty.csv"
-_similarity_c_c_file = 'input\\similarity_c_c_binary.xlsx'
-_similarity_c_l_file = 'input\\similarity_c_l.xlsx'
-_distance_file = "input\\distance.xlsx"
-_frequency_letter_file = "input\\frequency_letters_mathieu.txt"
-_frequency_bigram_file = "input\\frequency_bigrams_mathieu.txt"
-_ergonomics_file = "input\\ergonomics_antti.csv"
-_performance_file = "input\\performance.csv"
+#_keyslots_file = 'input\\variable_slots.txt'
+#_numbers_file = 'input\\numbers.csv'
+#_letter_file = 'input\\letters.txt'
+#_character_file = 'input\\characters.txt'
+#_azerty_file = "input\\layouts\\azerty.csv"
+#_similarity_c_c_file = 'input\\similarity_c_c_binary.xlsx'
+#_similarity_c_l_file = 'input\\similarity_c_l.xlsx'
+#_distance_file = "input\\distance.xlsx"
+#_frequency_letter_file = "input\\frequency_letters_mathieu.txt"
+#_frequency_bigram_file = "input\\frequency_bigrams_mathieu.txt"
+#_ergonomics_file = "input\\ergonomics_antti.csv"
+#_performance_file = "input\\performance.csv"
 
-def change_to_linux():
-    _keyslots_file = _keyslots_file.replace('\\', '/')
-    _numbers_file = _numbers_file.replace('\\', '/')
-    _letter_file = _letter_file.replace('\\', '/')
-    _character_file = _character_file.replace('\\', '/')
-    _azerty_file = _azerty_file.replace('\\', '/')
-    _similarity_c_c_file = _similarity_c_c_file.replace('\\', '/')
-    _similarity_c_l_file = _similarity_c_l_file.replace('\\', '/')
-    _distance_file = _distance_file.replace('\\', '/')
-    _frequency_letter_file = _frequency_letter_file.replace('\\', '/')
-    _frequency_bigram_file = _frequency_bigram_file.replace('\\', '/')
-    _ergonomics_file = _ergonomics_file.replace('\\', '/')
-    _performance_file = _performance_file.replace('\\', '/')
+#File names for input values linux
+_keyslots_file = 'input/variable_slots.txt'
+_numbers_file = 'input/numbers.csv'
+_letter_file = 'input/letters.txt'
+_character_file = 'input/characters.txt'
+_azerty_file = "input/layouts/azerty.csv"
+_similarity_c_c_file = 'input/similarity_c_c_binary.xlsx'
+_similarity_c_l_file = 'input/similarity_c_l.xlsx'
+_distance_file = "input/distance.xlsx"
+_frequency_letter_file = "input/frequency_letters_mathieu.txt"
+_frequency_bigram_file = "input/frequency_bigrams_mathieu.txt"
+_ergonomics_file = "input/ergonomics_antti.csv"
+_performance_file = "input/performance.csv"
+
 
 def get_azerty():
     """
@@ -133,7 +134,7 @@ def get_probabilities():
     
     p_bigrams_all = _read_tuple_list_to_dict(_frequency_bigram_file)
     
-    #2. go through characters and letters and check if they are available in dict. If not add 0 probability. 
+    #2. go through characters and letters and check if they are available in dict. If not add minimum probability. 
     # For each deadkey in the character list, sum up the probabilities of letters composed with the deadkey
     minimum = np.min(p_single.values())
     for c1 in all_chars:
@@ -146,8 +147,11 @@ def get_probabilities():
                     if not k in all_chars:                       
                         if  _is_composed_of(c1[0], k):
                             #add this letter's probability to deadkey probability
-                            print c1 +" composes "+k
-                            c1_p += p_single[k]
+                            try: 
+                                print c1 +" composes "+k
+                                c1_p += p_single[k]
+                            except: 
+                                print "Can't read that letter"
                 if c1_p == 0:
                     # assign a minimum probability
                     c1_p = 0.5*minimum 
@@ -205,8 +209,8 @@ def get_probabilities():
                                 p_bigrams[(c2_1, c2_2)] += p_bigrams_all[(c1, c2)]
                             else:
                                 p_bigrams[(c2_1, c2_2)] = p_bigrams_all[(c1, c2)]
-                else:
-                    print "We don't care about", c1
+                #else:
+                    #print "We don't care about", c1
             elif not c2 in all_chars:
                 if len(c2_d)>1:
                     c2_1 = c2_d[0]                
@@ -223,8 +227,8 @@ def get_probabilities():
                                 p_bigrams[(c2_1, c2_2)] += p_bigrams_all[(c1, c2)]
                             else:
                                 p_bigrams[(c2_1, c2_2)] = p_bigrams_all[(c1, c2)]
-                else:
-                    print "We don't care about", c2
+                #else:
+                    #print "We don't care about", c2
     
     # Give 0.5* lowest probability to those pairs that have no frequency
     minimum = np.min(p_bigrams.values())
@@ -256,12 +260,19 @@ def get_performance():
     return performance 
 
 def _decompose(c):
-    c_d = unicodedata.normalize('NFKD', c)
-    special_char_list = {"^": "0302", "~":"0303", "`":"0300"}
-    for i in range(0,len(c_d)):
-        if c_d[i] in special_char_list:
-            c_d[i] = special_char_list[c_d[i]]
-    return c_d
+    try:
+        #print c
+        c_d = unicodedata.normalize('NFKD', c)
+        special_char_list = {"^": "0302", "~":"0303", "`":"0300"}
+    
+        for i in range(0,len(c_d)):
+            if c_d[i] in special_char_list:
+                c_d[i] = special_char_list[c_d[i]]
+                
+        return c_d
+    except:
+        return c
+        
         
 def _read_distance_matrix(path, level_cost, recompute=0):
     """
