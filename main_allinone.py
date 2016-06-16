@@ -10,8 +10,6 @@ PYTHONIOENCODING="utf-8"
 Defines weights and level costs and creates the input file for reformulating the problem
 '''
 
-if os.name != 'nt':
-    change_to_linux()
 
 #Define the weights for:
 #w_p: Performance
