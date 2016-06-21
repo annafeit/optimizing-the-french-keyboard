@@ -21,10 +21,11 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
     Mapping can be a path to the mapping file, created by the reformulation, or an actual mapping. 
     If no objective is given, it computes the objective values.
     """
+    print mapping
     if type(mapping)==str:
         if mapping.split(".")[-1] == "mst":
             mapping, obj = create_map_from_reformulation(mapping)
-        if mapping.split(".")[-1] == "txt":
+        elif mapping.split(".")[-1] == "txt":
             mapping = create_map_from_txt(mapping)
         
     if objective==-1:          
@@ -215,7 +216,7 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
     ax.set_ylim([-1,26])
     plt.axis('off')
     if not plotname=="":
-        fig.savefig(plotname, dpi=300, bbox_inches='tight')	    
+        fig.savefig(plotname, dpi=300, bbox_inches='tight')    
     
 def log_mapping(mapping, path, objective=""):
     """
