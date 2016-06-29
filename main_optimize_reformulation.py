@@ -20,7 +20,7 @@ Defines weights and level costs, optimizes the reformulated problem and plots th
 #w_e: Ergonomics
 w_p, w_a, w_f, w_e = [0.25, 0.25, 0.25, 0.25]
 
-
+scenario = '_scenario1'
 #Define the extra cost for the level of the keyslot added when computing the distance between two keyslots. 
 # This is used in familiarity score to punish the assignment to other levels as used on azerty.
 #Example: 
@@ -30,5 +30,5 @@ w_p, w_a, w_f, w_e = [0.25, 0.25, 0.25, 0.25]
 level_cost = {u'':0, u'Shift':1, u'Alt':2, u'Alt_Shift':3}
 
 
-model, mapping = optimize_reformulation("reformulation\\reformulation.lp")
+model, mapping = optimize_reformulation("reformulation/reformulation"+scenario+".lp")
 plot_mapping(mapping, plotname="optimum.png", w_p=w_p, w_a=w_a, w_f=w_f, w_e=w_e, level_cost=level_cost, quadratic=1)

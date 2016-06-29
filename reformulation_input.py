@@ -44,27 +44,21 @@ def create_reformulation_input(w_P, w_A, w_F, w_E, level_cost):
                                                ergonomics)
     
     #Writes an input file for the reformualtion of the quadratic term
-    f = codecs.open("reformulation\\reformulation_input.txt", 'w', encoding="utf-8")
+    f = codecs.open("reformulation/reformulation_input"+scenario+".txt", 'w', encoding="utf-8")
     f.write("# number of letters and keys\n")
     f.write(str(len(keyslots))+"\n")
     f.write("# w_A*probabilities*similarities\n")
     
-    nonzeros = 0
-    #Compute nonzeros for normalization
-    for (c1,c2) in similarity_c_c:            
-            if c1 in characters and c2 in characters:
-                v = (p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]
-                if v > 0:
-                    nonzeros += 1
+    prob_sim_matrix = get_quadratic_prob_similarity_matrix(w_A,\
+                               characters,\
+                               keyslots,\
+                               p_single,\
+                               similarity_c_c, similarity_c_l)
+    
     for c1 in characters:
         prob_strings = []
         for c2 in characters:
-            if(c1,c2) in similarity_c_c.keys():
-                #Don#t forget the weighting
-                p = w_A*2*(1/float(nonzeros))*(p_single[c1] + p_single[c2])*similarity_c_c[c1,c2]
-                prob_strings.append("%f"%p)
-            else:
-                prob_strings.append("0")
+            prob_strings.append("%f"%prob_sim_matrix[(c1,c2)])            
         #add dummy values to fill it up to number of keyslots
         for i in range(len(keyslots) - len(characters)):
             prob_strings.append("0")
@@ -94,9 +88,8 @@ def create_reformulation_input(w_P, w_A, w_F, w_E, level_cost):
     f.write("# fixation of the spacebar to the bottom\n")
     f.write("0\n")
     f.write("# scale for rounding down the probabilities\n")
-    f.write("1e6")
-    f.write("# distances\n")
-    distances = distance_level_0
+    f.write("1e6\n")
+    f.write("# linear cost\n")
 
     for c in characters:
         lin_strings = []

@@ -40,11 +40,11 @@ def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, level_cost, neighborhood_size
                                similarity_c_c, similarity_c_l,\
                                distance_level_0, distance_level_1,\
                                ergonomics, quadratic=quadratic)
-    plot_mapping(mapping, plotname="mappings\\final.png", azerty=azerty, letters=letters,\
+    plot_mapping(mapping, plotname="mappings/final.png", azerty=azerty, letters=letters,\
                  objective=obj,\
                  p=P, a=A, f=F, e=E, w_p=w_p,w_a=w_a, w_f=w_f, w_e=w_e)
 
-    log_mapping(mapping, "mappings\\final.mst", objective=obj)
+    log_mapping(mapping, "mappings/final.mst", objective=obj)
     
     return mapping
     
@@ -210,7 +210,7 @@ def opti_callback(model, where):
             obj = model.cbGet(GRB.callback.MIPSOL_OBJ)
             nodecnt = int(model.cbGet(GRB.callback.MIPSOL_NODCNT))
             print 'Found incumbent soln at node', nodecnt, 'objective', obj
-            simple_mst_writer(model, 'mappings\\solution_%.4f.mst'%obj, nodecnt, obj)
+            simple_mst_writer(model, 'mappings/solution_%.4f.mst'%obj, nodecnt, obj)
     except GurobiError as e:
         print "Gurobi Error:"
         print e.errno

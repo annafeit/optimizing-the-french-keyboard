@@ -4,28 +4,15 @@ import unicodedata
 import numpy as np
 
 
-#File names for input values windows
-#_keyslots_file = 'input\\variable_slots.txt'
-#_numbers_file = 'input\\numbers.csv'
-#_letter_file = 'input\\letters.txt'
-#_character_file = 'input\\characters.txt'
-#_azerty_file = "input\\layouts\\azerty.csv"
-#_similarity_c_c_file = 'input\\similarity_c_c_binary.xlsx'
-#_similarity_c_l_file = 'input\\similarity_c_l.xlsx'
-#_distance_file = "input\\distance.xlsx"
-#_frequency_letter_file = "input\\frequency_letters_mathieu.txt"
-#_frequency_bigram_file = "input\\frequency_bigrams_mathieu.txt"
-#_ergonomics_file = "input\\ergonomics_antti.csv"
-#_performance_file = "input\\performance.csv"
-
-#File names for input values linux
-_keyslots_file = 'input/variable_slots.txt'
-_numbers_file = 'input/numbers.csv'
+#File names for input values 
+scenario = '_scenario3'
+_keyslots_file = 'input/variable_slots'+scenario+'.txt'
+_numbers_file = 'input/numbers'+scenario+'.csv'
 _letter_file = 'input/letters.txt'
-_character_file = 'input/characters.txt'
+_character_file = 'input/characters'+scenario+'.txt'
 _azerty_file = "input/layouts/azerty.csv"
-_similarity_c_c_file = 'input/similarity_c_c_binary.xlsx'
-_similarity_c_l_file = 'input/similarity_c_l.xlsx'
+_similarity_c_c_file = 'input/similarity_c_c_binary_m.xlsx'
+_similarity_c_l_file = 'input/similarity_c_l_m.xlsx'
 _distance_file = "input/distance.xlsx"
 _frequency_letter_file = "input/frequency_letters_mathieu.txt"
 _frequency_bigram_file = "input/frequency_bigrams_mathieu.txt"
@@ -148,7 +135,7 @@ def get_probabilities():
                         if  _is_composed_of(c1[0], k):
                             #add this letter's probability to deadkey probability
                             try: 
-                                print c1 +" composes "+k
+                                #print c1 +" composes "+k
                                 c1_p += p_single[k]
                             except: 
                                 print "Can't read that letter"
