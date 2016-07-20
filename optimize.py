@@ -228,7 +228,7 @@ def create_mapping(m):
 
 def optimize_reformulation(lp_path):
     model = read(lp_path)        
-    model.nodefileStart = 0.5
+    model.setParam('NodefileStart', 0.5)
     print "SETTING: nodefileStart = 0.5"
     print "optimizing..."
     #optimize and pass custom callback function
