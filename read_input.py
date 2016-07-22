@@ -193,7 +193,7 @@ def get_distances(level_cost):
 
 def get_probabilities():
     
-    p_single = pd.read_csv(_frequency_letter_file, sep=" ", encoding="utf-8", index_col=None, quoting=3, names={u'letter', u'frequency'})
+    p_single = pd.read_csv(_frequency_letter_file, sep=" ", encoding="utf-8", index_col=0, quoting=3)
     p_single = p_single.to_dict()[u'frequency']
     
     p_bigrams = _read_tuple_list_to_dict(_frequency_bigram_file)
@@ -212,7 +212,7 @@ def derive_probabilities_from_raw_values(letter_file, bigram_file, scenario=""):
     """
     if scenario != "":
         set_scenario_files(scenario)
-    all_chars = get_characters() + get_letters() + get_fixed_characters()    
+    all_chars = get_characters() + get_letters() + get_fixed_characters()        
     #1. read the frequencies from the corresponding files as they are
     p_single_all = pd.read_csv(letter_file, sep=" ", encoding="utf-8", index_col=0, quoting=3)
     p_single_all = p_single_all.to_dict()[u'frequency']
@@ -263,7 +263,8 @@ def derive_probabilities_from_raw_values(letter_file, bigram_file, scenario=""):
      #keypresses that needed to be made.  
     p_bigrams_all = _read_tuple_list_to_dict(bigram_file)
     p_bigrams = {(c1,c2):0 for c1 in all_chars for c2 in all_chars}
-        
+    print(all_chars)
+    print((u"r", u"Μ") in p_bigrams.keys())
     counter=0
     for (c1,c2), v in p_bigrams_all.items():        
         counter+= 1
@@ -357,7 +358,7 @@ def derive_probabilities_from_raw_values(letter_file, bigram_file, scenario=""):
     #Write BIGRAMS  to file
     f = codecs.open(_frequency_bigram_file,'w', encoding="utf-8")    
     for (c1,c2),v in p_bigrams.items():
-        f.write("%s %s %s"%(c1,c2,repr(v)))
+        f.write("%s %s %s"%(c1,c2,repr(float(v))))
         f.write("\n")
     f.close()
 
