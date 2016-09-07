@@ -45,3 +45,7 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+*.png
+mappings/solution_3.9877.mst
+*.mst
+*.pyc

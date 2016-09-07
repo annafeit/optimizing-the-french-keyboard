@@ -3,7 +3,7 @@ from test_model import*
 import numpy as np 
 PYTHONIOENCODING="utf-8"
 
-def get_objectives(mapping, w_p, w_a, w_f, w_e, level_cost, quadratic=0):
+def get_objectives(mapping, w_p, w_a, w_f, w_e,  level_cost, corpus_weights,quadratic=0):
     """
         A wrapper for the _get_objectives function to use the standard test variables
     """
@@ -16,7 +16,7 @@ def get_objectives(mapping, w_p, w_a, w_f, w_e, level_cost, quadratic=0):
     similarity_c_c, similarity_c_l,\
     distance_level_0, distance_level_1,\
     ergonomics\
-     = create_test_model(level_cost)
+     = get_all_input_values(level_cost, corpus_weights)
                    
     return _get_objectives(mapping, w_p, w_a, w_f, w_e, \
                                azerty,\
@@ -55,7 +55,8 @@ def _get_objectives(mapping, w_p, w_a, w_f, w_e,\
                                ergonomics)
         
     #remove letters from mapping that are not in characters list
-    for c, s in mapping.iteritems():
+    
+    for c, s in {c:s for c,s in mapping.iteritems()}.iteritems():
         if not c in characters:
             mapping.pop(c)  
             print("%s not in the to-be-mapped character set"%c)
@@ -77,8 +78,7 @@ def _get_objectives(mapping, w_p, w_a, w_f, w_e,\
     lin_A = A
     print 'linear Association: %.4f'%lin_A
     if quadratic:           
-        prob_sim_matrix = get_quadratic_prob_similarity_matrix(w_a,\
-                               characters,\
+        prob_sim_matrix = get_quadratic_prob_similarity_matrix(characters,\
                                keyslots,\
                                p_single,\
                                similarity_c_c, similarity_c_l)
@@ -86,7 +86,7 @@ def _get_objectives(mapping, w_p, w_a, w_f, w_e,\
             if c1 in mapping and c2 in mapping:
                 s1 = mapping[c1]
                 s2 = mapping[c2]                
-                v = prob_sim_matrix[c1,c2]
+                v = prob_sim_matrix[c1,c2]*distance_level_0[s1,s2]
                 A += v
                 if v>0:
                     print '%s, %s: %f'%(c1, c2, v)
@@ -154,7 +154,7 @@ def get_linear_costs(w_p, w_a, w_f, w_e,
             linear_cost[c,s] = w_p * x_P[c,s] + w_a*x_A[c,s] + w_f*x_F[c,s] + w_e*x_E[c,s]         
     return linear_cost, x_P, x_A, x_F, x_E
 
-def get_quadratic_prob_similarity_matrix(w_a,\
+def get_quadratic_prob_similarity_matrix(
                                characters,\
                                keyslots,\
                                p_single,\
@@ -164,8 +164,8 @@ def get_quadratic_prob_similarity_matrix(w_a,\
     for c1 in characters:
         for c2 in characters:
             if(c1,c2) in similarity_c_c.keys():
-                #Don#t forget the weighting
-                p = w_a*(p_single[c1] + p_single[c2])*similarity_c_c[c1,c2]
+                #Unweighted!
+                p = (p_single[c1] + p_single[c2])*similarity_c_c[c1,c2]
                 matrix[(c1,c2)] = p
             else:
                 matrix[(c1,c2)] = 0
@@ -175,16 +175,16 @@ def get_quadratic_prob_similarity_matrix(w_a,\
 
 def normalize_dict_values(d):
     """
-    Normalizes all values to be between 0 and 1, then divides them by the number of non-zero values 
-    to make them comparable with association scores, for which many values are 0
+    Normalizes all values to be between 0 and 1 
     """
-    nonzeros = len([v for v in d.values() if not v == 0])
+    #nonzeros = len([v for v in d.values() if not v == 0])
     maximum = np.max(d.values())
     minimum = np.min(d.values())
-
+    sum_all = np.sum(d.values())
     for k, v in d.iteritems():
-        d[k] = v / float(maximum - minimum)
+        d[k] = (v - minimum) / float(maximum - minimum)        
         #d[k] = d[k] / float(nonzeros)
+        #d[k] = v / float(sum_all)
     return d
     
 def neighborhood(s, n, keyslots, distances):

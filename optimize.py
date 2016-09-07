@@ -227,7 +227,9 @@ def create_mapping(m):
     return mapping
 
 def optimize_reformulation(lp_path):
-    model = read(lp_path)        
+    #add constraints
+    new_path = add_capitalization_constraints(lp_path)
+    model = read(new_path)  
     model.setParam('NodefileStart', 0.5)
     print "SETTING: nodefileStart = 0.5"
     print "optimizing..."
@@ -261,7 +263,60 @@ def optimize_reformulation(lp_path):
     #return the model with the fixed solution
     return model, mapping
 
-
+def add_capitalization_constraints(lp_path):
+    capitals ={u'à':u'À',u'â':u'Â',u'ç':u'Ç',u'é':u'É',u'è':u'È',u'ê':u'Ê',\
+               u'ë':u'Ë',u'î':u'Î',u'ï':u'Ï',u'ô':u'Ô',\
+               u'ù':u'Ù',u'û':u'Û',u'ü':u'Ü',u'ÿ':u'Ÿ',u'æ':u'Æ',u'œ':u'Œ',\
+               u'ß':u'ẞ',u'þ':u'Þ',u'ð':u'Ð',u'ŋ':u'Ŋ',u'ĳ':u'Ĳ',\
+               u'ə':u'Ə',u'ʒ':u'Ʒ',u'ı':u'İ'}
+    
+    lp_original = open(lp_path, 'r')
+    new_path = ".".join(lp_path.split(".")[:-1])+"_capital."+lp_path.split(".")[-1]
+    new_lp = open(new_path, 'w')
+    all_lines = lp_original.readlines()
+    for i in range(0,len(all_lines)):
+        new_lp.write(all_lines[i])
+        if i<len(all_lines)-1:
+            #if next line is the "binaries" line, add capitalization constraints here
+            if "binaries" in all_lines[i+1]:
+                #for each key, if the shifted version of that key is also available, 
+                #enforce that for all characters mapped to that key, the capital version of the character is mapped to the shifted key
+                # if the shifted version is not available as a free slot, or this is a shifted version, then enforce that the letter 
+                # is not mapped to that key. 
+                keyslots = get_keyslots()
+                characters = get_characters()
+                for k_index in range(0,len(keyslots)):
+                    k = keyslots[k_index]
+                    if "Shift" in k:
+                        #unshifted version should not be assigned to shifted version of keyslots
+                        for c,s in capitals.iteritems():
+                            if s in characters: #only if the capital version is in the to-be-mapped characters
+                                c_index = characters.index(c)
+                                #x(i,k) = 0
+                                s = "x(%i,%i) = 0\n"%(c_index, k_index)
+                                new_lp.write(s)
+                    else:
+                        if k+"_Shift" in keyslots:
+                            #if character is assigned to this key, its capital version must be assigned to shifted version of the key
+                            for c,s in capitals.iteritems():
+                                if s in characters: #only if the capital version is in the to-be-mapped characters
+                                    k_shifted_index = keyslots.index(k+"_Shift")
+                                    c_index = characters.index(c)
+                                    s_index = characters.index(s)
+                                    #x(i,k) - x(j,l) = 0
+                                    s = "x(%i,%i) - x(%i,%i) = 0\n"%(c_index, k_index, s_index, k_shifted_index)
+                                    new_lp.write(s)
+                        else:
+                            #unshifted version should not be assigned to key where shifted version is not available
+                            for c,s in capitals.iteritems():
+                                if s in characters: #only if the capital version is in the to-be-mapped characters
+                                    c_index = characters.index(c)
+                                    #x(i,k) = 0
+                                    s = "x(%i,%i) = 0\n"%(c_index, k_index)
+                                    new_lp.write(s)
+    new_lp.close()
+    lp_original.close()
+    return new_path
 
     
         

@@ -1,0 +1,153 @@
+TwitterClassic_output_1.tsv	E0034_Easy_output_1.tsv	0.42042907491185466
+TwitterClassic_output_1.tsv	CSS_output_1.tsv	0.4601667668236872
+TwitterClassic_output_1.tsv	CC++_output_1.tsv	0.4940172832560056
+TwitterClassic_output_1.tsv	Java_output_1.tsv	0.43570622990756136
+TwitterClassic_output_1.tsv	Javascript_output_1.tsv	0.3903461228459454
+TwitterClassic_output_1.tsv	Est Républicain_output_1.tsv	0.4697036614092649
+TwitterClassic_output_1.tsv	Ester_output_1.tsv	0.4518437191810666
+TwitterClassic_output_1.tsv	Python_output_1.tsv	0.5239275064300357
+CSS_output_1.tsv	CC++_output_1.tsv	0.45954455309499603
+Java_output_1.tsv	E0034_Easy_output_1.tsv	0.43266682504374476
+Java_output_1.tsv	CSS_output_1.tsv	0.4457480089883126
+Java_output_1.tsv	CC++_output_1.tsv	0.24665986996806827
+Java_output_1.tsv	Est Républicain_output_1.tsv	0.40614448410831183
+Java_output_1.tsv	Ester_output_1.tsv	0.44141341748949375
+Javascript_output_1.tsv	E0034_Easy_output_1.tsv	0.40826373326504195
+Javascript_output_1.tsv	CSS_output_1.tsv	0.3328600539152549
+Javascript_output_1.tsv	CC++_output_1.tsv	0.2780843525766173
+Javascript_output_1.tsv	Java_output_1.tsv	0.2628709326849579
+Javascript_output_1.tsv	Est Républicain_output_1.tsv	0.4527168653542636
+Javascript_output_1.tsv	Ester_output_1.tsv	0.4346128161344197
+Wiki_output_1.tsv	TwitterClassic_output_1.tsv	0.36965019633815094
+Wiki_output_1.tsv	CSS_output_1.tsv	0.44568234739996415
+Wiki_output_1.tsv	Java_output_1.tsv	0.43968216268728544
+Wiki_output_1.tsv	Javascript_output_1.tsv	0.37300299040460466
+Wiki_output_1.tsv	Est Républicain_output_1.tsv	0.44434389732289215
+Wiki_output_1.tsv	W0017_output_1.tsv	0.16500096192479258
+Wiki_output_1.tsv	W0036-01_output_1.tsv	0.14584515689082853
+Wiki_output_1.tsv	TwitterPop_output_1.tsv	0.34845133594909894
+Wiki_output_1.tsv	E0034_Easy_output_1.tsv	0.17837817953978324
+Wiki_output_1.tsv	W0015_output_1.tsv	0.1314406915618117
+Wiki_output_1.tsv	CC++_output_1.tsv	0.4857663629333439
+Wiki_output_1.tsv	W0066_output_1.tsv	0.11397229104330099
+Wiki_output_1.tsv	W0065_output_1.tsv	0.1277477611747489
+Wiki_output_1.tsv	Ester_output_1.tsv	0.1499068771686615
+Wiki_output_1.tsv	W0058_output_1.tsv	0.19933182184833975
+Wiki_output_1.tsv	Python_output_1.tsv	0.44858779862794257
+Wiki_output_1.tsv	W0057_output_1.tsv	0.18382727786006506
+Est Républicain_output_1.tsv	E0034_Easy_output_1.tsv	0.504752578261945
+Est Républicain_output_1.tsv	CSS_output_1.tsv	0.5024576606097801
+Est Républicain_output_1.tsv	CC++_output_1.tsv	0.3980008272448285
+W0017_output_1.tsv	TwitterClassic_output_1.tsv	0.43234477774034674
+W0017_output_1.tsv	TwitterPop_output_1.tsv	0.3936308141953455
+W0017_output_1.tsv	E0034_Easy_output_1.tsv	0.1658489284580831
+W0017_output_1.tsv	CSS_output_1.tsv	0.49900920013378086
+W0017_output_1.tsv	W0015_output_1.tsv	0.1359129221535443
+W0017_output_1.tsv	CC++_output_1.tsv	0.5275513116000081
+W0017_output_1.tsv	Java_output_1.tsv	0.47160750711780886
+W0017_output_1.tsv	Javascript_output_1.tsv	0.4303267362659224
+W0017_output_1.tsv	Est Républicain_output_1.tsv	0.5871432166753645
+W0017_output_1.tsv	Ester_output_1.tsv	0.11527336292536959
+W0017_output_1.tsv	Python_output_1.tsv	0.48086572252991877
+W0036-01_output_1.tsv	TwitterClassic_output_1.tsv	0.45333846944524503
+W0036-01_output_1.tsv	TwitterPop_output_1.tsv	0.42151197647167576
+W0036-01_output_1.tsv	E0034_Easy_output_1.tsv	0.1282055326651554
+W0036-01_output_1.tsv	CSS_output_1.tsv	0.5081470728635445
+W0036-01_output_1.tsv	W0015_output_1.tsv	0.07669387950089311
+W0036-01_output_1.tsv	CC++_output_1.tsv	0.5365577431472883
+W0036-01_output_1.tsv	Java_output_1.tsv	0.45204514345558366
+W0036-01_output_1.tsv	Javascript_output_1.tsv	0.432187422748281
+W0036-01_output_1.tsv	Est Républicain_output_1.tsv	0.5532162191397864
+W0036-01_output_1.tsv	Ester_output_1.tsv	0.0582618212492771
+W0036-01_output_1.tsv	W0017_output_1.tsv	0.08314571870479057
+W0036-01_output_1.tsv	Python_output_1.tsv	0.4708368318233991
+TwitterPop_output_1.tsv	TwitterClassic_output_1.tsv	0.20790247812715015
+TwitterPop_output_1.tsv	E0034_Easy_output_1.tsv	0.37190871696335664
+TwitterPop_output_1.tsv	CSS_output_1.tsv	0.47503736901696436
+TwitterPop_output_1.tsv	CC++_output_1.tsv	0.453845152956658
+TwitterPop_output_1.tsv	Java_output_1.tsv	0.4101492902918476
+TwitterPop_output_1.tsv	Javascript_output_1.tsv	0.3669745254664055
+TwitterPop_output_1.tsv	Est Républicain_output_1.tsv	0.47347360494138957
+TwitterPop_output_1.tsv	Ester_output_1.tsv	0.4069077017490535
+TwitterPop_output_1.tsv	Python_output_1.tsv	0.46425156663735667
+E0034_Easy_output_1.tsv	CSS_output_1.tsv	0.47910152395372485
+E0034_Easy_output_1.tsv	CC++_output_1.tsv	0.5279036067355555
+W0015_output_1.tsv	TwitterClassic_output_1.tsv	0.4465966321835074
+W0015_output_1.tsv	TwitterPop_output_1.tsv	0.4118314656103735
+W0015_output_1.tsv	E0034_Easy_output_1.tsv	0.13139901945585658
+W0015_output_1.tsv	CSS_output_1.tsv	0.5173574259821846
+W0015_output_1.tsv	CC++_output_1.tsv	0.4586505108505306
+W0015_output_1.tsv	Java_output_1.tsv	0.41310417168906777
+W0015_output_1.tsv	Javascript_output_1.tsv	0.41554307808714486
+W0015_output_1.tsv	Est Républicain_output_1.tsv	0.48497334146582516
+W0015_output_1.tsv	Ester_output_1.tsv	0.07462406440900687
+W0015_output_1.tsv	Python_output_1.tsv	0.3993557141820361
+W0066_output_1.tsv	TwitterClassic_output_1.tsv	0.38108489842317117
+W0066_output_1.tsv	CSS_output_1.tsv	0.48384865869732036
+W0066_output_1.tsv	Java_output_1.tsv	0.4556810169288042
+W0066_output_1.tsv	Javascript_output_1.tsv	0.42166534434621133
+W0066_output_1.tsv	Est Républicain_output_1.tsv	0.5216974695332527
+W0066_output_1.tsv	W0017_output_1.tsv	0.09385775132335768
+W0066_output_1.tsv	W0036-01_output_1.tsv	0.0934103472171289
+W0066_output_1.tsv	TwitterPop_output_1.tsv	0.3592430400196671
+W0066_output_1.tsv	E0034_Easy_output_1.tsv	0.1667450319228002
+W0066_output_1.tsv	W0015_output_1.tsv	0.10251367636620269
+W0066_output_1.tsv	CC++_output_1.tsv	0.5294501605014004
+W0066_output_1.tsv	W0065_output_1.tsv	0.049458571513307965
+W0066_output_1.tsv	Ester_output_1.tsv	0.11862509601220433
+W0066_output_1.tsv	W0058_output_1.tsv	0.1081167027673777
+W0066_output_1.tsv	Python_output_1.tsv	0.4867823676354272
+W0066_output_1.tsv	W0057_output_1.tsv	0.09371224711031662
+W0065_output_1.tsv	TwitterClassic_output_1.tsv	0.39228529370605664
+W0065_output_1.tsv	CSS_output_1.tsv	0.4834228732589721
+W0065_output_1.tsv	Java_output_1.tsv	0.46026293038132987
+W0065_output_1.tsv	Javascript_output_1.tsv	0.42650033549578636
+W0065_output_1.tsv	Est Républicain_output_1.tsv	0.5401062439143942
+W0065_output_1.tsv	W0017_output_1.tsv	0.08484983656557343
+W0065_output_1.tsv	W0036-01_output_1.tsv	0.08465483732196027
+W0065_output_1.tsv	TwitterPop_output_1.tsv	0.3619145933327802
+W0065_output_1.tsv	E0034_Easy_output_1.tsv	0.15358310100168282
+W0065_output_1.tsv	W0015_output_1.tsv	0.10424804086387231
+W0065_output_1.tsv	CC++_output_1.tsv	0.534196787517015
+W0065_output_1.tsv	Ester_output_1.tsv	0.10350984008678753
+W0065_output_1.tsv	W0058_output_1.tsv	0.098242505343114
+W0065_output_1.tsv	Python_output_1.tsv	0.4892255734491944
+W0065_output_1.tsv	W0057_output_1.tsv	0.07344483548856386
+Ester_output_1.tsv	E0034_Easy_output_1.tsv	0.1106560836684325
+Ester_output_1.tsv	CSS_output_1.tsv	0.5198622954555293
+Ester_output_1.tsv	CC++_output_1.tsv	0.523709297260198
+Ester_output_1.tsv	Est Républicain_output_1.tsv	0.5451343668046796
+W0058_output_1.tsv	TwitterClassic_output_1.tsv	0.44717876545343477
+W0058_output_1.tsv	CSS_output_1.tsv	0.5236020882711798
+W0058_output_1.tsv	Java_output_1.tsv	0.49376979524441583
+W0058_output_1.tsv	Javascript_output_1.tsv	0.4838954633795133
+W0058_output_1.tsv	Est Républicain_output_1.tsv	0.6193105967498714
+W0058_output_1.tsv	W0017_output_1.tsv	0.06038876151351959
+W0058_output_1.tsv	W0036-01_output_1.tsv	0.0949677030339973
+W0058_output_1.tsv	TwitterPop_output_1.tsv	0.407960700286195
+W0058_output_1.tsv	E0034_Easy_output_1.tsv	0.18633272267355908
+W0058_output_1.tsv	W0015_output_1.tsv	0.14912568437257132
+W0058_output_1.tsv	CC++_output_1.tsv	0.5965138133915822
+W0058_output_1.tsv	Ester_output_1.tsv	0.1224286426748412
+W0058_output_1.tsv	Python_output_1.tsv	0.5377248949580253
+W0058_output_1.tsv	W0057_output_1.tsv	0.042068449242515675
+Python_output_1.tsv	E0034_Easy_output_1.tsv	0.4519613364293846
+Python_output_1.tsv	CSS_output_1.tsv	0.49765467528223906
+Python_output_1.tsv	CC++_output_1.tsv	0.2550954236591155
+Python_output_1.tsv	Java_output_1.tsv	0.2775814994154879
+Python_output_1.tsv	Javascript_output_1.tsv	0.3326721671517217
+Python_output_1.tsv	Est Républicain_output_1.tsv	0.441797619103016
+Python_output_1.tsv	Ester_output_1.tsv	0.4565934885074703
+W0057_output_1.tsv	TwitterClassic_output_1.tsv	0.4262449724628241
+W0057_output_1.tsv	CSS_output_1.tsv	0.5035064888040738
+W0057_output_1.tsv	Java_output_1.tsv	0.4815528718274604
+W0057_output_1.tsv	Javascript_output_1.tsv	0.45977775297959184
+W0057_output_1.tsv	Est Républicain_output_1.tsv	0.6019062651917055
+W0057_output_1.tsv	W0017_output_1.tsv	0.055632502266610366
+W0057_output_1.tsv	W0036-01_output_1.tsv	0.09696228671139373
+W0057_output_1.tsv	TwitterPop_output_1.tsv	0.3906323798175171
+W0057_output_1.tsv	E0034_Easy_output_1.tsv	0.1829767202195226
+W0057_output_1.tsv	W0015_output_1.tsv	0.14212452048043728
+W0057_output_1.tsv	CC++_output_1.tsv	0.5763983646399331
+W0057_output_1.tsv	Ester_output_1.tsv	0.12487077893911219
+W0057_output_1.tsv	Python_output_1.tsv	0.5288985777541748

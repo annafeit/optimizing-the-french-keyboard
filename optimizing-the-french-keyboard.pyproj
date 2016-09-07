@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{8dcb4293-1642-4aeb-81ec-629e6c0e3646}</ProjectGuid>
+    <ProjectHome />
+    <StartupFile>evaluate_reformualtion_solution.py</StartupFile>
+    <SearchPath />
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <InterpreterId />
+    <InterpreterVersion />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+    <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="characters.txt" />
+    <Content Include="input\all_slots.txt" />
+    <Content Include="input\characters.txt" />
+    <Content Include="input\characters_scenario1.txt" />
+    <Content Include="input\characters_scenario2.txt" />
+    <Content Include="input\characters_scenario3.txt" />
+    <Content Include="input\characters_scenario4.txt" />
+    <Content Include="input\constant_slots.txt" />
+    <Content Include="input\constant_slots_study.txt" />
+    <Content Include="input\frequency_bigrams_scenario3_code.txt" />
+    <Content Include="input\frequency_bigrams_scenario3_formal.txt" />
+    <Content Include="input\frequency_bigrams_scenario3_twitter.txt" />
+    <Content Include="input\frequency_letters_scenario3_code.txt" />
+    <Content Include="input\frequency_letters_scenario3_formal.txt" />
+    <Content Include="input\frequency_letters_scenario3_twitter.txt" />
+    <Content Include="input\layouts\bepo.txt" />
+    <Content Include="input\letters.txt" />
+    <Content Include="input\old_frequency_bigrams_scenario3.txt" />
+    <Content Include="input\old_frequency_letters_scenario3.txt" />
+    <Content Include="input\resources\bigram_bepo.txt" />
+    <Content Include="input\resources\frequency_bigrams_mathieu.txt" />
+    <Content Include="input\resources\frequency_letters_mathieu.txt" />
+    <Content Include="input\resources\scenarios\characters_scenario1.txt" />
+    <Content Include="input\resources\scenarios\characters_scenario2.txt" />
+    <Content Include="input\resources\scenarios\characters_scenario3.txt" />
+    <Content Include="input\resources\scenarios\characters_scenario4.txt" />
+    <Content Include="input\resources\scenarios\letters.txt" />
+    <Content Include="input\resources\scenarios\variable_slots_scenario1.txt" />
+    <Content Include="input\resources\scenarios\variable_slots_scenario2.txt" />
+    <Content Include="input\resources\scenarios\variable_slots_scenario3.txt" />
+    <Content Include="input\resources\scenarios\variable_slots_scenario4.txt" />
+    <Content Include="input\resources\single_bepo.txt" />
+    <Content Include="input\variable_slots.txt" />
+    <Content Include="input\variable_slots_scenario1.txt" />
+    <Content Include="input\variable_slots_scenario2.txt" />
+    <Content Include="input\variable_slots_scenario3.txt" />
+    <Content Include="input\variable_slots_scenario4.txt" />
+    <Content Include="lists\characters_ordered.txt" />
+    <Content Include="mappings\solution_2.3716_perf.mst.png" />
+    <Content Include="mappings\solution_2.3716_perf.txt" />
+    <Content Include="mappings\solution_3.9877.mst.png" />
+    <Content Include="reformulation\keyboardoptimization\input-26-S.txt" />
+    <Content Include="reformulation\keyboardoptimization\input-Full-10F.txt" />
+    <Content Include="reformulation\lininput.txt" />
+    <Content Include="reformulation\README.txt" />
+    <Content Include="reformulation\reformulation_input_scenario3_ass.txt" />
+    <Content Include="reformulation\reformulation_input_scenario3_daryl.txt" />
+    <Content Include="reformulation\reformulation_input_scenario3_even.txt" />
+    <Content Include="reformulation\reformulation_input_scenario3_perf.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="evaluate_reformualtion_solution.py" />
+    <Compile Include="main_allinone.py" />
+    <Compile Include="main_optimize_reformulation.py" />
+    <Compile Include="main_problem.py" />
+    <Compile Include="objectives.py" />
+    <Compile Include="optimize.py" />
+    <Compile Include="plotting.py" />
+    <Compile Include="read_input.py" />
+    <Compile Include="reformulation_input.py" />
+    <Compile Include="test_model.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="input" />
+    <Folder Include="input\layouts" />
+    <Folder Include="input\resources" />
+    <Folder Include="input\resources\scenarios" />
+    <Folder Include="lists" />
+    <Folder Include="mappings" />
+    <Folder Include="reformulation" />
+    <Folder Include="reformulation\keyboardoptimization" />
+  </ItemGroup>
+  <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
+</Project>

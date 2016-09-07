@@ -13,7 +13,7 @@ PYTHONIOENCODING="utf-8"
 
 
 def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
-                 level_cost=-1, quadratic=-1,\
+                 level_cost=-1, corpus_weights=-1, quadratic=-1,\
                  objective=-1,\
                  p=-1, a=-1, f=-1, e=-1, w_p=-1,w_a=-1, w_f=-1, w_e=-1 ):
     """
@@ -30,15 +30,14 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
         
     if objective==-1:          
         if not level_cost == -1:
-            objective, p, a, f, e = get_objectives(mapping, w_p, w_a, w_f, w_e, level_cost, quadratic=quadratic)
+            objective, p, a, f, e = get_objectives(mapping, w_p, w_a, w_f, w_e, level_cost, corpus_weights, quadratic=quadratic)
                     
     if azerty == -1:
         azerty = get_azerty()
     if numbers == -1:
-        numbers = pd.read_csv("input\\numbers.csv", index_col=1, sep="\t", encoding='utf-8', quoting=3).to_dict()["keyslot"]
+        numbers = get_fixed_characters()
     if letters == -1:
-        with codecs.open('input\\letters.txt', encoding='utf-8') as file:
-            letters = file.read().splitlines()   
+        letters = get_letters()
         
     with open('input\\all_slots.txt') as file:    
         all_slots = file.read().splitlines()    
@@ -89,7 +88,7 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
                 )
     )
 
-    #Add letter annotation
+    #Add fixed character annotation
     for l in letters:
         if not l == "space":
             slot = azerty[l]
@@ -127,8 +126,9 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
                 color=(0.4,0.4,0.4)        
                 )
             
-    #Add number annotation
-    for (l,slot) in numbers.iteritems():                    
+   
+    for l in numbers:
+        slot = azerty[l]
         row = row_numbers[slot[0]]
         column = int(slot[1:3])
         level = slot[4:]

@@ -50,11 +50,12 @@ void printKaufmanBroeckxInequalities( const Matrix& probabilities, const Matrix&
       std::cout << c[k][i] << " " << name( "x", k, i );
       for( unsigned int l = 0; l < n; ++l ) {
         for( unsigned int j = 0; j < n; ++j ) {
-          double pd = probabilities[k][l]*distances[i][j];
-	  if( k == l && i == j )
-	    pd += linearcosts[k][i];
-          if( pd > eps ) {
-            std::cout << " + " << pd << " " << name( "x",l,j ) << std::endl; 
+			double pd = probabilities[k][l]*distances[i][j];
+			if( k == l && i == j ){
+				pd += linearcosts[k][i];
+			}
+			if( pd > eps ) {
+				std::cout << " + " << pd << " " << name( "x",l,j ) << std::endl; 
           }
         }
       }

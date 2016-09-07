@@ -3,6 +3,8 @@ import codecs
 import pandas as pd
 import unicodedata
 import numpy as np
+import glob
+import os
 
 PYTHONIOENCODING="utf-8"
 
@@ -17,9 +19,13 @@ _distance_file = "input/distance.xlsx"
 _frequency_letter_file = ""
 _frequency_bigram_file = ""
 _ergonomics_file = "input/ergonomics_antti.csv"
-_performance_file = "input/performance.csv"
+_performance_file = "input/performance_daryl.csv"
+scenario = ""
     
-def set_scenario_files(scenario):
+def set_scenario_files(scenario_number):
+    global scenario
+    scenario = scenario_number
+    
     #File names for input values 
     global _keyslots_file
     _keyslots_file = 'input/variable_slots_'+scenario+'.txt'
@@ -30,12 +36,16 @@ def set_scenario_files(scenario):
     global _character_file
     _character_file= 'input/characters_'+scenario+'.txt'
     
-    global _frequency_letter_file
-    _frequency_letter_file= "input/frequency_letters_"+scenario+'.txt'
+    #get all files with that scenario as a list!
+    os.chdir("input/")
+    global _frequency_letter_file    
+    _frequency_letter_file =   ["input/"+f for f in glob.glob("frequency_letters_"+scenario+'*.txt')]
    
     global _frequency_bigram_file
-    _frequency_bigram_file= "input/frequency_bigrams_"+scenario+'.txt'
-
+    _frequency_bigram_file= ["input/"+f for f in glob.glob("frequency_bigrams_"+scenario+'*.txt')]
+    os.chdir("../")
+    
+    
 
 
 
@@ -191,17 +201,81 @@ def get_distances(level_cost):
     distance_level_0, distance_level_1 = _read_distance_matrix(_distance_file, level_cost, recompute=0)
     return distance_level_0, distance_level_1
 
-def get_probabilities():
-    
-    p_single = pd.read_csv(_frequency_letter_file, sep=" ", encoding="utf-8", index_col=0, quoting=3)
-    p_single = p_single.to_dict()[u'frequency']
-    
-    p_bigrams = _read_tuple_list_to_dict(_frequency_bigram_file)
-    
+def get_probabilities(corpus_weights={}):
+    """
+        Reads in the frequency file whose filename must be set above. If corpus_weights are given and there are multiple frequency files, 
+        the frequency of a letter/bigram is computed as the weighted sum of the frequencies in each corpus. The corpus weights are given 
+        as a dictionary of corpus name to weight. The corpus name must be part of the filename, otherwise it is not recognized as such.
+        If there are several frequency files defined and no weights are given, each corpus is weighted with the same weight.
+        Weights must add up to 1.0
+    """
+    p_single = {}
+    p_bigrams = {}
+    if len(_frequency_letter_file) == 1:
+        print("only one corpus")
+        #only one file, read in and output probabilities
+        p_single = pd.read_csv(_frequency_letter_file[0], sep=" ", encoding="utf-8", index_col=0, quoting=3)
+        p_single = p_single.to_dict()[u'frequency']
+
+        p_bigrams = _read_tuple_list_to_dict(_frequency_bigram_file[0])
+    else:
+        if len(corpus_weights) == len(_frequency_letter_file):
+            #check if weights sum up to 1:
+            if np.sum(corpus_weights.values()) != 1:
+                raise ValueError('Corpus weights must add up to 1')
+                
+            #weight by given weights            
+            for l_file, b_file in zip(_frequency_letter_file, _frequency_bigram_file):
+                print("weighting corpora")
+                single = pd.read_csv(l_file, sep=" ", encoding="utf-8", index_col=0, quoting=3)
+                single = single.to_dict()[u'frequency']
+                #weight according to given weight:
+                weight = 0
+                for k,v in corpus_weights.iteritems():
+                    if k in l_file:
+                        weight = v
+                        break;
+                if weight == 0:
+                    raise ValueError('no weight found for file: %s'%l_file)
+                                   
+                if len(p_single) == 0:
+                    p_single = {c:v*weight for c,v in single.iteritems()}     
+                else:
+                    p_single = {c:((v*weight) + p_single[c]) for c,v in single.iteritems()}     
+                #the same for the bigrams
+                bigrams = _read_tuple_list_to_dict(b_file)
+                for k,v in corpus_weights.iteritems():
+                    if k in b_file:
+                        weight = v
+                        break;
+                if weight == 0:
+                    raise ValueError('no weight found for file: %s'%b_file)                
+                if len(p_bigrams) == 0:
+                    p_bigrams = {c:v*weight for c,v in bigrams.iteritems()}     
+                else:
+                    p_bigrams = {c:((v*weight) + p_bigrams[c]) for c,v in bigrams.iteritems()}    
+        else:
+            #weigh everything evenly
+            weight = 1/float(len(_frequency_letter_file))
+            for l_file, b_file in zip(_frequency_letter_file, _frequency_bigram_file):
+                print("no weights given, weighting each corpus evenly")
+                single = pd.read_csv(l_file, sep=" ", encoding="utf-8", index_col=0, quoting=3)
+                single = single.to_dict()[u'frequency']
+                if len(p_single) == 0:
+                    p_single = {c:v*weight for c,v in single.iteritems()}     
+                else:
+                    p_single = {c:((v*weight) + p_single[c]) for c,v in single.iteritems()}     
+                    
+                bigrams = _read_tuple_list_to_dict(b_file)
+                if len(p_bigrams) == 0:
+                    p_bigrams = {c:v*weight for c,v in bigrams.iteritems()}     
+                else:
+                    p_bigrams = {c:((v*weight) + p_bigrams[c]) for c,v in bigrams.iteritems()}    
+                
     return p_single, p_bigrams
 
     
-def derive_probabilities_from_raw_values(letter_file, bigram_file, scenario=""):
+def derive_probabilities_from_raw_values(letter_file, bigram_file, scenario="", name_addition=""):
     """
         Derives the letter and bigram level probabilities from the given raw probability files for *all* characters and bigrams
         Takes care of combined characters and distributing the frequencies accordingly. Then writes them to a file for later use.
@@ -212,7 +286,8 @@ def derive_probabilities_from_raw_values(letter_file, bigram_file, scenario=""):
     """
     if scenario != "":
         set_scenario_files(scenario)
-    all_chars = get_characters() + get_letters() + get_fixed_characters()        
+    all_chars = get_characters() + get_letters()
+    print all_chars
     #1. read the frequencies from the corresponding files as they are
     p_single_all = pd.read_csv(letter_file, sep=" ", encoding="utf-8", index_col=0, quoting=3)
     p_single_all = p_single_all.to_dict()[u'frequency']
@@ -264,7 +339,6 @@ def derive_probabilities_from_raw_values(letter_file, bigram_file, scenario=""):
     p_bigrams_all = _read_tuple_list_to_dict(bigram_file)
     p_bigrams = {(c1,c2):0 for c1 in all_chars for c2 in all_chars}
     print(all_chars)
-    print((u"r", u"Μ") in p_bigrams.keys())
     counter=0
     for (c1,c2), v in p_bigrams_all.items():        
         counter+= 1
@@ -342,8 +416,8 @@ def derive_probabilities_from_raw_values(letter_file, bigram_file, scenario=""):
                                 
                     #else:
                         #print "We don't care about", c2
+     
     
-    # Give 0.5* lowest probability to those pairs that have no frequency
     minimum = np.min([v for v in p_bigrams.values() if v>0])
     for (c1,c2),v in p_bigrams.items():
         if v==0:
@@ -356,16 +430,16 @@ def derive_probabilities_from_raw_values(letter_file, bigram_file, scenario=""):
                 
         
     #Write BIGRAMS  to file
-    f = codecs.open(_frequency_bigram_file,'w', encoding="utf-8")    
-    for (c1,c2),v in p_bigrams.items():
+    f = codecs.open("input/frequency_bigrams_"+scenario +name_addition+".txt" ,'w', encoding="utf-8")    
+    for (c1,c2),v in p_bigrams_normalized.items():
         f.write("%s %s %s"%(c1,c2,repr(float(v))))
         f.write("\n")
     f.close()
 
     #Write LETTERS  to file
-    f = codecs.open(_frequency_letter_file,'w', encoding="utf-8")
+    f = codecs.open("input/frequency_letters_"+scenario +name_addition+".txt",'w', encoding="utf-8")
     f.write("letter frequency\n")
-    for c,v in p_single.items():
+    for c,v in p_single_normalized.items():
         f.write("%s %s"%(c,repr(v)))
         f.write("\n")
     f.close()
@@ -384,7 +458,7 @@ def get_performance():
     """
     #Performance: (key, letter)->t
     performance = _read_tuple_list_to_dict(_performance_file)
-    return performance 
+    return normalize_dict_values(performance)
 
 def decompose(c):
     try:
@@ -511,3 +585,17 @@ def _is_composed_of(deadkey, character):
                 deadkey_code = unicodedata.decomposition(deadkey)[-4:]
             character_code = unicodedata.decomposition(character)[-4:]
             return deadkey_code == character_code
+
+def normalize_dict_values(d):
+    """
+    Normalizes all values to be between 0 and 1 
+    """
+    #nonzeros = len([v for v in d.values() if not v == 0])
+    maximum = np.max(d.values())
+    minimum = np.min(d.values())
+    sum_all = np.sum(d.values())
+    for k, v in d.iteritems():
+        d[k] = (v - minimum) / float(maximum - minimum)        
+        #d[k] = d[k] / float(nonzeros)
+        #d[k] = v / float(sum_all)
+    return d

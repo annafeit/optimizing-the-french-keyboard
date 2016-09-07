@@ -6,7 +6,7 @@ from read_input import *
 PYTHONIOENCODING="utf-8"
 
 
-def create_test_model(level_cost):    
+def get_all_input_values(level_cost, corpus_weights):    
     
     print "read in: characters, keyslots and letters"
     azerty = get_azerty()
@@ -23,7 +23,7 @@ def create_test_model(level_cost):
 
     #read in single probabilities
     
-    p_single, p_bigram = get_probabilities()
+    p_single, p_bigram = get_probabilities(corpus_weights)
     ergonomics = get_ergonomics()
     performance = get_performance()
     
