@@ -3,7 +3,7 @@ from test_model import*
 import numpy as np 
 PYTHONIOENCODING="utf-8"
 
-def get_objectives(mapping, w_p, w_a, w_f, w_e,  level_cost, corpus_weights,quadratic=0):
+def get_objectives(mapping, w_p, w_a, w_f, w_e, corpus_weights,quadratic=0):
     """
         A wrapper for the _get_objectives function to use the standard test variables
     """
@@ -16,9 +16,9 @@ def get_objectives(mapping, w_p, w_a, w_f, w_e,  level_cost, corpus_weights,quad
     similarity_c_c, similarity_c_l,\
     distance_level_0, distance_level_1,\
     ergonomics\
-     = get_all_input_values(level_cost, corpus_weights)
+     = get_all_input_values(corpus_weights)
                    
-    return _get_objectives(mapping, w_p, w_a, w_f, w_e, \
+    return accu_get_objectives(mapping, w_p, w_a, w_f, w_e, \
                                azerty,\
                                characters,\
                                keyslots,\
@@ -29,7 +29,7 @@ def get_objectives(mapping, w_p, w_a, w_f, w_e,  level_cost, corpus_weights,quad
                                distance_level_0, distance_level_1,\
                                ergonomics, quadratic=quadratic)
 
-def _get_objectives(mapping, w_p, w_a, w_f, w_e,\
+def accu_get_objectives(mapping, w_p, w_a, w_f, w_e,\
                                azerty,\
                                characters,\
                                keyslots,\

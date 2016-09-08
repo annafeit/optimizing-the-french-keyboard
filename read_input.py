@@ -16,6 +16,8 @@ _azerty_file = "input/layouts/azerty.csv"
 _similarity_c_c_file = 'input/similarity_c_c_binary_m.xlsx'
 _similarity_c_l_file = 'input/similarity_c_l_m.xlsx'
 _distance_file = "input/distance.xlsx"
+_distance_file_0 = "input/distance0.txt"
+_distance_file_1 = "input/distance1.txt"
 _frequency_letter_file = ""
 _frequency_bigram_file = ""
 _ergonomics_file = "input/ergonomics_antti.csv"
@@ -39,10 +41,10 @@ def set_scenario_files(scenario_number):
     #get all files with that scenario as a list!
     os.chdir("input/")
     global _frequency_letter_file    
-    _frequency_letter_file =   ["input/"+f for f in glob.glob("frequency_letters_"+scenario+'*.txt')]
+    _frequency_letter_file =   ["input/"+f for f in glob.glob("frequency_letters_"+scenario+'_*.txt')]
    
     global _frequency_bigram_file
-    _frequency_bigram_file= ["input/"+f for f in glob.glob("frequency_bigrams_"+scenario+'*.txt')]
+    _frequency_bigram_file= ["input/"+f for f in glob.glob("frequency_bigrams_"+scenario+'_*.txt')]
     os.chdir("../")
     
     
@@ -115,6 +117,7 @@ def get_characters():
     with codecs.open(_character_file, encoding='utf-8') as f:
         characters_file = f.read().splitlines()
     characters = [correct_diacritic(c.strip()) for c in characters_file]      
+    characters.sort()
     return characters
 
 def correct_diacritic(c):
@@ -137,6 +140,7 @@ def get_letters():
     with codecs.open(_letter_file, encoding='utf-8') as f:
         letters_file = f.read().splitlines()
     letters = [c.strip() for c in letters_file]
+    letters.sort()
     return letters
 
 def get_fixed_characters():
@@ -146,7 +150,9 @@ def get_fixed_characters():
     """    
     fixed = pd.read_csv(_numbers_file, index_col=1, sep="\t", encoding='utf-8', quoting=3)
     fixed = fixed.index.tolist()
-    return [correct_diacritic(c.strip()) for c in fixed]   
+    fixed = [correct_diacritic(c.strip()) for c in fixed]   
+    fixed.sort
+    return fixed
     
 def get_keyslots():    
     """
@@ -167,6 +173,7 @@ def get_keyslots():
             #do nothing
             continue
             
+    keyslots.sort()
     return keyslots
 
 def get_character_similarities():
@@ -191,14 +198,15 @@ def get_character_letter_similarities():
     similarity_c_l = _read_similarity_matrix(_similarity_c_l_file, characters, letters)
     return similarity_c_l
 
-def get_distances(level_cost):
+def get_distances():
     """
         Returns a dictionary of key tuples to distance values between the keys. 
         Returns two such dictionaries, one where the distance is based on the row and column distance, 
         one where it also includes the distance due to different levels (Shift, Alt etc.) The additional level cost is given as input.
     """
     #Distance values (key,key)->d
-    distance_level_0, distance_level_1 = _read_distance_matrix(_distance_file, level_cost, recompute=0)
+    distance_level_0 = _read_tuple_list_to_dict(_distance_file_0)
+    distance_level_1 = _read_tuple_list_to_dict(_distance_file_1)
     return distance_level_0, distance_level_1
 
 def get_probabilities(corpus_weights={}):
@@ -470,7 +478,7 @@ def decompose(c):
         return c
         
         
-def _read_distance_matrix(path, level_cost, recompute=0):
+def read_distance_matrix(level_cost, recompute=0):
     """
         reads the distance between the keys from the excel file. If the file is empty (or recompute is set) it creates the distance matrix
         and writes it to the file. The file does not include any level distance.
@@ -489,7 +497,7 @@ def _read_distance_matrix(path, level_cost, recompute=0):
         dictionary_level_1: normalized distance including the level cost
     """
     row_numbers = {u"A":0, u"B":1, u"C":2, u"D":3, u"E":4}
-    df = pd.read_excel(path, encoding='utf-8')
+    df = pd.read_excel(_distance_file, encoding='utf-8')
     index = df.index
     columns = df.columns
     dictionary_level_0 = {}
@@ -503,7 +511,7 @@ def _read_distance_matrix(path, level_cost, recompute=0):
                 #if there is no value yet, compute it based on the names:
                 row_distance = np.abs(row_numbers[slot1[0]] - row_numbers[slot2[0]])
                 column_distance = np.abs(int(slot1[1:3]) - int(slot2[1:3]))                
-                #Special case: shift
+                #Special case: space
                 if slot1[0:3] == "A03":
                     if int(slot2[1:3])>3:
                         column_distance = max(0,column_distance-4)
@@ -518,7 +526,7 @@ def _read_distance_matrix(path, level_cost, recompute=0):
             dictionary_level_1[(slot1,slot2)] = (df.iloc[i,j]+level_distance) / float((df.max().max() + np.max(level_cost.values())))
             dictionary_level_0[(slot1,slot2)] = df.iloc[i,j] / float((df.max().max()))
     if changed:
-        df.to_excel(path)                                  
+        df.to_excel(_distance_file)                                  
     return dictionary_level_0, dictionary_level_1
 
 

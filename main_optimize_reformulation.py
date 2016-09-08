@@ -30,5 +30,4 @@ scenario = 'scenario3'
 level_cost = {u'':0, u'Shift':1, u'Alt':2, u'Alt_Shift':3}
 set_scenario_files(scenario)
 
-model, mapping = optimize_reformulation("reformulation/reformulation_input_scenario3_even.lp")
-plot_mapping(mapping, plotname="optimum.png", w_p=w_p, w_a=w_a, w_f=w_f, w_e=w_e, level_cost=level_cost, quadratic=1)
+model = optimize_reformulation("reformulation/reformulation_input_scenario3.lp")

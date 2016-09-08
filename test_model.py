@@ -6,7 +6,7 @@ from read_input import *
 PYTHONIOENCODING="utf-8"
 
 
-def get_all_input_values(level_cost, corpus_weights):    
+def get_all_input_values( corpus_weights):    
     
     print "read in: characters, keyslots and letters"
     azerty = get_azerty()
@@ -19,7 +19,7 @@ def get_all_input_values(level_cost, corpus_weights):
     similarity_c_l = get_character_letter_similarities()
     
     print "read in: distance values"    
-    distance_level_0, distance_level_1 = get_distances(level_cost)
+    distance_level_0, distance_level_1 = get_distances()
 
     #read in single probabilities
     

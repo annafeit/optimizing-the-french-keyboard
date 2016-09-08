@@ -3,7 +3,7 @@ from read_input import *
 import numpy as np 
 PYTHONIOENCODING="utf-8"
 
-def create_reformulation_input(w_P, w_A, w_F, w_E, level_cost, corpus_weights, scenario):
+def create_reformulation_input(w_P, w_A, w_F, w_E, corpus_weights, scenario, quadratic=1):
     
     """
         creates the file reformulation_input.txt which is used as input for the kaufmann-broeckx reformulation done in the C++ scripts.
@@ -20,7 +20,7 @@ def create_reformulation_input(w_P, w_A, w_F, w_E, level_cost, corpus_weights, s
     similarity_c_c, similarity_c_l,\
     distance_level_0, distance_level_1,\
     ergonomics\
-     = get_all_input_values(level_cost, corpus_weights)
+     = get_all_input_values(corpus_weights)
         
     #linear_costs is already weighted, the x_ are not    
     linear_costs, x_p, x_a, x_f, x_e =  get_linear_costs(w_P, w_A, w_F, w_E, 
@@ -51,7 +51,7 @@ def create_reformulation_input(w_P, w_A, w_F, w_E, level_cost, corpus_weights, s
     for c1 in characters:
         prob_strings = []
         for c2 in characters:
-            prob_strings.append("%f"%(w_A*prob_sim_matrix[(c1,c2)])) #remember to weight           
+            prob_strings.append("%f"%(quadratic*w_A*prob_sim_matrix[(c1,c2)])) #remember to weight           
         #add dummy values to fill it up to number of keyslots
         for i in range(len(keyslots) - len(characters)):
             prob_strings.append("0")

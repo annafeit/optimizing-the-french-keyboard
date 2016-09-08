@@ -2,12 +2,14 @@
 from gurobipy import *
 from plotting import *
 from test_model import *
+from objectives import *
 PYTHONIOENCODING="utf-8"
 
-def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, level_cost, neighborhood_size, quadratic=0):
+def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, corpus_weights, quadratic=0, capitalization_constraints=1, name="final"):
     """
         A wrapper for the _solve_the_keyboard_Problem function to use the standard test variables
     """
+    
     azerty,\
     characters,\
     keyslots,\
@@ -17,9 +19,9 @@ def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, level_cost, neighborhood_size
     similarity_c_c, similarity_c_l,\
     distance_level_0, distance_level_1,\
     ergonomics\
-     = create_test_model(level_cost)
+     = get_all_input_values(corpus_weights)
                    
-    model,mapping =  _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, neighborhood_size,\
+    model,mapping =  _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, \
                                azerty,\
                                characters,\
                                keyslots,\
@@ -28,29 +30,32 @@ def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, level_cost, neighborhood_size
                                performance,\
                                similarity_c_c, similarity_c_l,\
                                distance_level_0, distance_level_1,\
-                               ergonomics, quadratic=quadratic)
+                               ergonomics, quadratic=quadratic, capitalization_constraints=capitalization_constraints)
     
-    obj, P, A, F, E = _get_objectives(mapping, w_p, w_a, w_f, w_e, neighborhood_size,\
-                               azerty,\
-                               characters,\
-                               keyslots,\
-                               letters,\
-                               p_single, p_bigram,\
-                               performance,\
-                               similarity_c_c, similarity_c_l,\
-                               distance_level_0, distance_level_1,\
-                               ergonomics, quadratic=quadratic)
-    plot_mapping(mapping, plotname="mappings/final.png", azerty=azerty, letters=letters,\
+    #obj, P, A, F, E = accu_get_objectives(mapping, w_p, w_a, w_f, w_e, \
+    #                           azerty,\
+    #                           characters,\
+    #                           keyslots,\
+    #                           letters,\
+    #                           p_single, p_bigram,\
+    #                           performance,\
+    #                           similarity_c_c, similarity_c_l,\
+    #                           distance_level_0, distance_level_1,\
+    #                           ergonomics, quadratic=quadratic)
+    
+    obj, P, A, F, E = get_objectives(mapping, w_p, w_a, w_f, w_e, corpus_weights,quadratic=0)
+    
+    plot_mapping(mapping, plotname="mappings/"+name+".png", azerty=azerty, letters=letters,\
                  objective=obj,\
                  p=P, a=A, f=F, e=E, w_p=w_p,w_a=w_a, w_f=w_f, w_e=w_e)
-
-    log_mapping(mapping, "mappings/final.mst", objective=obj)
+    
+    log_mapping(mapping, "mappings/"+name+".mst", objective=obj)
     
     return mapping
     
 
 
-def _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, neighborhood_size,
+def _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e,
                                azerty,\
                                characters,\
                                keyslots,\
@@ -59,7 +64,13 @@ def _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, neighborhood_size,
                                performance,\
                                similarity_c_c, similarity_c_l,\
                                distance_level_0, distance_level_1,\
-                               ergonomics, quadratic=0):    
+                               ergonomics, quadratic=0, capitalization_constraints=1):    
+    
+    capitals ={u'à':u'À',u'â':u'Â',u'ç':u'Ç',u'é':u'É',u'è':u'È',u'ê':u'Ê',\
+               u'ë':u'Ë',u'î':u'Î',u'ï':u'Ï',u'ô':u'Ô',\
+               u'ù':u'Ù',u'û':u'Û',u'ü':u'Ü',u'ÿ':u'Ÿ',u'æ':u'Æ',u'œ':u'Œ',\
+               u'ß':u'ẞ',u'þ':u'Þ',u'ð':u'Ð',u'ŋ':u'Ŋ',u'ĳ':u'Ĳ',\
+               u'ə':u'Ə',u'ʒ':u'Ʒ',u'ı':u'İ'}
     
     #Test some stuff in advance to avoid infeasbility:
     if len(characters) > len(keyslots):
@@ -79,37 +90,41 @@ def _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, neighborhood_size,
     m.update()
     m._vars = m.getVars()
     
+    linear_cost, x_P, x_A, x_F, x_E = get_linear_costs(w_p, w_a, w_f, w_e, 
+                               azerty,\
+                               characters,\
+                               keyslots,\
+                               letters,\
+                               p_single, p_bigram,\
+                               performance,\
+                               similarity_c_c, similarity_c_l,\
+                               distance_level_0, distance_level_1,\
+                               ergonomics)
+
     #Define the objective terms
     P = quicksum(
-            ((p_bigram[(c,l)]*performance[(s,azerty[l])]) + (p_bigram[(l,c)]*performance[(azerty[l],s)]))*x[c,s]\
-                for c in characters for s in keyslots for l in letters
+            x_P[c,s]*x[c,s]\
+                for c in characters for s in keyslots
         )            
     
     A = quicksum(
-            (p_single[c] + p_single[l])*similarity_c_l[(c,l)]*distance_level_0[s,azerty[l]]*x[c,s] \
-                 for s in keyslots for (c,l) in similarity_c_l)       
+            x_A[c,s]*x[c,s]\
+                 for c in characters for s in keyslots
+        )
     if quadratic: 
-        #This part is a *bonus*. If one of those character pairs are close together (in the neighborhood), we give a bonus that corresponds
-        #to the frequency*(1-distance)
-        #A += quicksum(
-        #    (p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]*(1-distance_level_1[(s1,s2)])*x[c1,s1]*x[c2,s2]\
-        #         for (c1,c2) in similarity_c_c for s1 in keyslots for s2 in keyslots)
+        A += 0#quicksum(
+            #(p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]*(1-distance_level_1[(s1,s2)])*x[c1,s1]*x[c2,s2]\
+            #     for (c1,c2) in similarity_c_c for s1 in keyslots for s2 in keyslots)
                 
-        A += -1*(quicksum(
-            (p_single[c1] + p_single[c2])*(1-distance_level_0[(s1,s2)])*x[c1,s1]*x[c2,s2]\
-                 for (c1,c2) in similarity_c_c \
-                    for s1 in keyslots \
-                        for s2 in neighborhood(s1, neighborhood_size, keyslots, distance_level_0)))
         
     F = quicksum(
-            #if that character was previously not on azerty, distance is 0.
-            p_single[c] * distance_level_1.get((s, azerty.get(c,"NaN")),0)*x[c,s] \
+            x_F[c,s]*x[c,s]\
                  for c in characters for s in keyslots
         )    
         
     E = quicksum(
-            ((p_bigram[(c,l)]*ergonomics[(s,azerty[l])]) + (p_bigram[(l,c)]*ergonomics[(azerty[l],s)]))*x[c,s]\
-                for c in characters for s in keyslots for l in letters
+            x_E[c,s]*x[c,s]\
+                 for c in characters for s in keyslots
         )    
      
     m._P = P
@@ -132,6 +147,24 @@ def _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, neighborhood_size,
         
     for s in keyslots:
         m.addConstr(quicksum(x[c,s] for c in characters) <= 1, s + "_assigned_at_most_once")
+    
+    if capitalization_constraints:
+        print("Adding capitalization constraints")
+        for c,s_c in capitals.iteritems():
+            if c in characters and s_c in characters:
+                for k in keyslots:
+                    if "Shift" in k:
+                        m.addConstr(x[c,k] == 0, c +  "_not_mapped_to_shifted_key_"+k)
+                    else:
+                        if k+"_Shift" in keyslots:
+                            #if character is assigned to this key, its capital version must be assigned to shifted version of the key
+                            m.addConstr(x[c,k] - x[s_c, k+"_Shift"] == 0,c +  "_and_"+s_c+"mapped_to_shifted_"+k)
+                        else:
+                            #unshifted version should not be assigned to key where shifted version is not available
+                            m.addConstr(x[c,k] == 0, c+"_no_shift_available_"+k)
+            else:
+                print("%s, %s, not in character set"%(c,s_c))
+            
     
     print "set constraints"
     
@@ -249,10 +282,10 @@ def optimize_reformulation(lp_path):
     if model.status == GRB.Status.OPTIMAL:
         print('Optimal objective: %g' % model.objVal)
         model.write('model.sol')
-        exit(0)
+        
     elif model.status != GRB.Status.INFEASIBLE:
         print('Optimization was stopped with status %d' % model.status)
-        exit(0)
+        
     #print('The model is infeasible; computing IIS')
     #model.computeIIS()
     #print('\nThe following constraint(s) cannot be satisfied:')s
@@ -261,14 +294,14 @@ def optimize_reformulation(lp_path):
     #        print('%s' % c.constrName)     
     
     #return the model with the fixed solution
-    return model, mapping
+    return model
 
 def add_capitalization_constraints(lp_path):
     capitals ={u'à':u'À',u'â':u'Â',u'ç':u'Ç',u'é':u'É',u'è':u'È',u'ê':u'Ê',\
                u'ë':u'Ë',u'î':u'Î',u'ï':u'Ï',u'ô':u'Ô',\
                u'ù':u'Ù',u'û':u'Û',u'ü':u'Ü',u'ÿ':u'Ÿ',u'æ':u'Æ',u'œ':u'Œ',\
                u'ß':u'ẞ',u'þ':u'Þ',u'ð':u'Ð',u'ŋ':u'Ŋ',u'ĳ':u'Ĳ',\
-               u'ə':u'Ə',u'ʒ':u'Ʒ',u'ı':u'İ'}
+               u'ə':u'Ə',u'ʒ':u'Ʒ',u'ı':u'İ'}
     
     lp_original = open(lp_path, 'r')
     new_path = ".".join(lp_path.split(".")[:-1])+"_capital."+lp_path.split(".")[-1]
@@ -289,8 +322,8 @@ def add_capitalization_constraints(lp_path):
                     k = keyslots[k_index]
                     if "Shift" in k:
                         #unshifted version should not be assigned to shifted version of keyslots
-                        for c,s in capitals.iteritems():
-                            if s in characters: #only if the capital version is in the to-be-mapped characters
+                        for c, s_c in capitals.iteritems():
+                            if c in characters and s_c in characters: #only if the capital version is in the to-be-mapped characters
                                 c_index = characters.index(c)
                                 #x(i,k) = 0
                                 s = "x(%i,%i) = 0\n"%(c_index, k_index)
@@ -298,18 +331,18 @@ def add_capitalization_constraints(lp_path):
                     else:
                         if k+"_Shift" in keyslots:
                             #if character is assigned to this key, its capital version must be assigned to shifted version of the key
-                            for c,s in capitals.iteritems():
-                                if s in characters: #only if the capital version is in the to-be-mapped characters
+                            for c,s_c in capitals.iteritems():
+                                if c in characters and s_c in characters: #only if the capital version is in the to-be-mapped characters
                                     k_shifted_index = keyslots.index(k+"_Shift")
                                     c_index = characters.index(c)
-                                    s_index = characters.index(s)
+                                    s_index = characters.index(s_c)
                                     #x(i,k) - x(j,l) = 0
                                     s = "x(%i,%i) - x(%i,%i) = 0\n"%(c_index, k_index, s_index, k_shifted_index)
                                     new_lp.write(s)
                         else:
                             #unshifted version should not be assigned to key where shifted version is not available
-                            for c,s in capitals.iteritems():
-                                if s in characters: #only if the capital version is in the to-be-mapped characters
+                            for c in characters and c,s_c in capitals.iteritems():
+                                if c in characters and s_c in characters: #only if the capital version is in the to-be-mapped characters
                                     c_index = characters.index(c)
                                     #x(i,k) = 0
                                     s = "x(%i,%i) = 0\n"%(c_index, k_index)

@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{8dcb4293-1642-4aeb-81ec-629e6c0e3646}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>evaluate_reformualtion_solution.py</StartupFile>
+    <StartupFile>main_allinone.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>

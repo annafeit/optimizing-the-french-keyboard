@@ -13,7 +13,7 @@ PYTHONIOENCODING="utf-8"
 
 
 def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
-                 level_cost=-1, corpus_weights=-1, quadratic=-1,\
+                 corpus_weights=-1, quadratic=-1,\
                  objective=-1,\
                  p=-1, a=-1, f=-1, e=-1, w_p=-1,w_a=-1, w_f=-1, w_e=-1 ):
     """
@@ -29,8 +29,7 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
             mapping = create_map_from_txt(mapping)
         
     if objective==-1:          
-        if not level_cost == -1:
-            objective, p, a, f, e = get_objectives(mapping, w_p, w_a, w_f, w_e, level_cost, corpus_weights, quadratic=quadratic)
+            objective, p, a, f, e = get_objectives(mapping, w_p, w_a, w_f, w_e, corpus_weights, quadratic=quadratic)
                     
     if azerty == -1:
         azerty = get_azerty()
@@ -225,7 +224,7 @@ def log_mapping(mapping, path, objective=""):
     """
     mstfile = codecs.open(path, 'w', encoding="utf-8")
     if not objective=="":
-        mstfile.write('# Objective %e\n' %(obj))
+        mstfile.write('# Objective %e\n' %(objective))
     for character, key in mapping.iteritems():        
         mstfile.write('%s %s\n' % (character, key))       
     mstfile.close()
@@ -253,15 +252,9 @@ def create_map_from_reformulation(path):
         creates the mapping from the refomulated solution .mst file
     """
     #read in characters in keyslots
-    with codecs.open('input\\characters.txt', encoding='utf-8') as f:
-        characters = f.read().splitlines()
-    with codecs.open('input\\variable_slots.txt', encoding='utf-8') as f:    
-        keyslots = f.read().splitlines()   
-    numbers = pd.read_csv("input\\numbers.csv", index_col=1, sep="\t", encoding='utf-8', quoting=3).to_dict()["keyslot"]
-    #remove number keys from free keyslots
-    for n_slot in numbers.values():        
-        keyslots.remove(n_slot)
-
+    keyslots = get_keyslots()
+    characters = get_characters()
+    
     #read in mst file line by line and create mapping
     mst = codecs.open(path, 'r', encoding="utf-8")
     first_line = mst.readline()
