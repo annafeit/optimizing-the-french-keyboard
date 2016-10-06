@@ -466,12 +466,15 @@ def derive_probabilities_from_raw_values(letter_file, bigram_file, scenario="", 
     f.close()
     return p_single_normalized, p_bigrams_normalized
 
-def get_ergonomics():
+def get_ergonomics(normalize=1):
     """
         Returns a dictionary with letter-character tuples to ergonomic values
     """
     ergonomics = _read_tuple_list_to_dict(_ergonomics_file)
-    return ergonomics
+    if normalize:
+        return normalize_dict_values(ergonomics)
+    else:
+        return ergonomics    
 
 def get_performance(normalize=1):
     """

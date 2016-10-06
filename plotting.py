@@ -4,6 +4,9 @@ import pandas as pd
 from pandas.tools.plotting import parallel_coordinates
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import matplotlib as mpl
+from matplotlib import cm
 import seaborn as sns
 import codecs
 import re
@@ -12,6 +15,27 @@ from read_input import *
 from mapping import *
 
 PYTHONIOENCODING="utf-8"
+
+#box dimensions
+key_height = 4
+key_width = 4
+
+#keyboard specifics
+row_distance = 0.5
+column_distance = 0.5
+row_shift = {'A':0, 'B':0, 'C':key_width/2, 'D':key_width, 'E':3*key_width/2}
+row_numbers = {u"A":0, u"B":1, u"C":2, u"D":3, u"E":4}
+
+#text positions
+pos_normal_x = 0.5
+pos_normal_y = 0.5
+pos_shift_x = 0.5
+pos_shift_y = key_height-0.5
+pos_alt_x = key_width-0.5
+pos_alt_y = 0.5
+pos_alt_shift_x = key_width-0.5
+pos_alt_shift_y = key_height-0.5
+
 
 def swap_and_plot(mapping, char1, char2, corpus_weights, w_p, w_a, w_f, w_e, plot=True):
     #read in mapping
@@ -427,3 +451,163 @@ def character_swap_with_all(mapping, char, corpus_weights, w_p, w_a, w_f, w_e):
     xlims=ax.get_xlim()
     ax.plot(xlims, [0,0], color='k')
     fig.set_size_inches(20,10)
+    
+    
+
+
+def plot_keyboard_heatmap(values, values_norm, level_considered, title="", unit=""):
+    #Plots a heatmap of the keyboard- Values must be a dictionary from key to value used for color value
+    azerty = get_azerty()
+    letters = get_letters()
+    numbers = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
+
+    with open('input\\all_slots.txt') as file:    
+        all_slots = file.read().splitlines()
+    keyslots = get_keyslots()
+
+    cmap = mpl.cm.winter_r
+
+
+
+
+    fig, ax = plt.subplots(1,1)
+    fig.set_size_inches(10,4)
+
+    for slot in all_slots:
+        row = row_numbers[slot[0]]
+        column = int(slot[1:3])
+        level = slot[4:]
+
+        height = key_height
+        width = key_width
+        #Space
+        if row==0 and column == 3:
+            width = key_width*5 + 4*row_distance
+
+        x = (column*key_width)+column*column_distance - row_shift[slot[0]]
+        y = (row*key_height) + row*row_distance
+
+        if level == "":
+            ax.add_patch(
+                patches.Rectangle(
+                    (x,y),   # (x,y)
+                    width,          # width
+                    height,          # height
+                    fill = False
+                )
+            )
+        #color slots we are interested in    
+        if level == level_considered and slot in values:            
+            color = cmap(int(np.round(values_norm[slot]*255)))
+            color = [color[0], color[1],color[2], 1.0] 
+
+            ax.add_patch(
+                patches.Rectangle(
+                    (x,y),   # (x,y)
+                    width,          # width
+                    height,          # height
+                    facecolor = color
+                )    
+            )
+
+
+    ax.set_xlim([-8,58])
+    ax.set_ylim([-1,26])
+    plt.axis('off')
+
+
+    #Add fixed character annotation
+    for l in letters:
+        if not l == "space":
+            slot = azerty[l]
+            row = row_numbers[slot[0]]
+            column = int(slot[1:3])
+            level = slot[4:]
+
+            if level == "":
+                pos_x = pos_normal_x
+                pos_y = pos_normal_y
+                ha = 'left'
+                va = 'bottom'
+            if level == "Shift":
+                pos_x = pos_shift_x
+                pos_y = pos_shift_y
+                ha = 'left'
+                va = 'top'
+            if level == "Alt":
+                pos_x = pos_alt_x
+                pos_y = pos_alt_y
+                ha = 'right'
+                va = 'bottom'
+            if level == "Alt_Shift":
+                pos_x = pos_alt_shift_x
+                pos_y = pos_alt_shift_y
+                ha = 'right'
+                va = 'top'
+            x = (column*key_width)+column*column_distance + pos_x - row_shift[slot[0]]
+            y = (row*key_height) + row*row_distance + pos_y
+
+            ax.text(x,y,l,            
+                horizontalalignment=ha,
+                verticalalignment=va,
+                fontsize=14,
+                #fontweight='bold',
+                color=(0.4,0.4,0.4)        
+                )
+
+    for l in numbers:
+        slot = azerty[l]
+        row = row_numbers[slot[0]]
+        column = int(slot[1:3])
+        level = slot[4:]
+
+        if level == "":
+            pos_x = pos_normal_x
+            pos_y = pos_normal_y
+            ha = 'left'
+            va = 'bottom'
+        if level == "Shift":
+            pos_x = pos_shift_x
+            pos_y = pos_shift_y
+            ha = 'left'
+            va = 'top'
+        if level == "Alt":
+            pos_x = pos_alt_x
+            pos_y = pos_alt_y
+            ha = 'right'
+            va = 'bottom'
+        if level == "Alt_Shift":
+            pos_x = pos_alt_shift_x
+            pos_y = pos_alt_shift_y
+            ha = 'right'
+            va = 'top'
+        x = (column*key_width)+column*column_distance + pos_x - row_shift[slot[0]]
+        y = (row*key_height) + row*row_distance + pos_y
+
+        ax.text(x,y,l,            
+            horizontalalignment=ha,
+            verticalalignment=va,
+            fontsize=14,
+            #fontweight='bold',
+            color= (0.4,0.4,0.4)        
+         )
+
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+
+    # Set the colormap and norm to correspond to the data for which
+    # the colorbar will be used.
+
+    norm = mpl.colors.Normalize(vmin=np.min(values.values()), vmax=np.max(values.values()))
+
+    # ColorbarBase derives from ScalarMappable and puts a colorbar
+    # in a specified axes, so it has everything needed for a
+    # standalone colorbar.  There are many more kwargs, but the
+    # following gives a basic continuous colorbar with ticks
+    # and labels.
+    cb1 = mpl.colorbar.ColorbarBase(cax, cmap=cmap,
+                                    norm=norm,
+                                    orientation='vertical')
+    cb1.set_label(unit)
+
+    ax.set_title(title, fontsize=16)
