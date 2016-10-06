@@ -63,7 +63,7 @@ $ E00
 > E03_Alt
 [ E04_Alt
 ] E05_Alt
-d^ E06_Alt
+^d E06_Alt
 ± E07_Alt
 − E08_Alt
 ÷ E09_Alt

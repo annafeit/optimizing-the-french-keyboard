@@ -9,11 +9,11 @@ import os
 PYTHONIOENCODING="utf-8"
 
 _keyslots_file = ""
-_numbers_file = ""
+_fixed_file = ""
 _letter_file = 'input/letters.txt'
 _character_file = ""
 _azerty_file = "input/layouts/azerty.csv"
-_similarity_c_c_file = 'input/similarity_c_c_binary_m.xlsx'
+_similarity_c_c_file = 'input/similarity_c_c_m.xlsx'
 _similarity_c_l_file = 'input/similarity_c_l_m.xlsx'
 _distance_file = "input/distance.xlsx"
 _distance_file_0 = "input/distance0.txt"
@@ -24,7 +24,7 @@ _ergonomics_file = "input/ergonomics_antti.csv"
 _performance_file = "input/performance_daryl.csv"
 scenario = ""
     
-def set_scenario_files(scenario_number):
+def set_scenario_files(scenario_number, character_set):
     global scenario
     scenario = scenario_number
     
@@ -32,19 +32,19 @@ def set_scenario_files(scenario_number):
     global _keyslots_file
     _keyslots_file = 'input/variable_slots_'+scenario+'.txt'
     
-    global _numbers_file
-    _numbers_file= 'input/numbers_'+scenario+'.csv'
+    global _fixed_file
+    _fixed_file= 'input/fixed_'+scenario+'.csv'
     
     global _character_file
-    _character_file= 'input/characters_'+scenario+'.txt'
+    _character_file= 'input/characters_'+scenario+character_set + '.txt'
     
     #get all files with that scenario as a list!
     os.chdir("input/")
     global _frequency_letter_file    
-    _frequency_letter_file =   ["input/"+f for f in glob.glob("frequency_letters_"+scenario+'_*.txt')]
+    _frequency_letter_file =   ["input/"+f for f in glob.glob("frequency_letters_*_"+character_set+'.txt')]
    
     global _frequency_bigram_file
-    _frequency_bigram_file= ["input/"+f for f in glob.glob("frequency_bigrams_"+scenario+'_*.txt')]
+    _frequency_bigram_file= ["input/"+f for f in glob.glob("frequency_bigrams_*_"+character_set+'.txt')]
     os.chdir("../")
     
     
@@ -71,8 +71,10 @@ unicode_diacritic = {u"\u0302": u"^d",
                      u"\u0328": u"˛d",
                      u"\u0326": u",d",
                      u"\u0335": u"-d",
-                     u"\u0337": u"/d"
+                     u"\u0337": u"/d",
+                     u"\u0338": u"/d"
                     }
+
 def get_unicode_diacritic(u):
     if u in unicode_diacritic.keys():
         return unicode_diacritic[u]
@@ -80,13 +82,13 @@ def get_unicode_diacritic(u):
         return u
 
 diacritic_unicode = {u"^": u"\u0302", u"ˆ": u"\u0302",
-                     u"¨": u"\u0308",
+                     u"¨": u"\u0308", u'"': u"\u0308", 
                      u"~": u"\u0303", u"˜": u"\u0303", 
                      u"˘": u"\u0306",
                      u"ˇ": u"\u030c",
                      u"̑": u"\u0311",
                      u"ˋ": u"\u0300", u"`": u"\u0300", 
-                     u"ˊ": u"\u0301", u"´": u"\u0301", 
+                     u"ˊ": u"\u0301", u"´": u"\u0301", u"'": u"\u0301",
                      u"ˉ": u"\u0304", 
                      u"_": u"\u0331", u"̲":u"\u0331",
                      u"˙": u"\u0307",
@@ -98,7 +100,7 @@ diacritic_unicode = {u"^": u"\u0302", u"ˆ": u"\u0302",
                      u"˛": u"\u0328",
                      u",": u"\u0326", u"̦": u"\u0326", 
                      u"-": u"\u0335", u"̵": u"\u0335",
-                     u"/": u"\u0337", u"̷": u"\u0337"
+                     u"/": u"\u0337", u"̷": u"\u0337", 
                     }
 
 def get_azerty():
@@ -106,8 +108,9 @@ def get_azerty():
         Returns the Azerty keyboard in form of a dict from characters to keyslots (=mapping)
     """
     azerty =  pd.read_csv(_azerty_file, index_col=1, sep="\t", encoding='utf-8', quoting=3)
-    azerty.index=azerty.index.str.strip()
+    azerty.index=azerty.index.str.strip()    
     azerty = azerty.to_dict()["keyslot"]
+    azerty = {(correct_diacritic(c.strip())):s for c,s in azerty.iteritems()}
     return azerty
 
 def get_characters():
@@ -143,15 +146,21 @@ def get_letters():
     letters.sort()
     return letters
 
-def get_fixed_characters():
+
+def get_fixed_mapping():
     """
-        Returns a list of characters that are fixed on the keyboard. Their corresponding slots cannot be filled, but the
-        to-be-mapped characters are not optimized in relation to those but they are simply ignored.
+        Returns a mapping (dict) of characters that are fixed on the keyboard. Their corresponding slots cannot be filled. 
+        They are only considered in the association cost
     """    
-    fixed = pd.read_csv(_numbers_file, index_col=1, sep="\t", encoding='utf-8', quoting=3)
-    fixed = fixed.index.tolist()
-    fixed = [correct_diacritic(c.strip()) for c in fixed]   
-    fixed.sort
+    fixed =  pd.read_csv(_fixed_file, index_col=1, sep="\t", encoding='utf-8', quoting=3)
+    fixed.index=fixed.index.str.strip()    
+    fixed = fixed.to_dict()["keyslot"]
+    fixed = {(correct_diacritic(c.strip())):s for c,s in fixed.iteritems()}
+    #check against characters
+    characters = get_characters()
+    for c in characters:
+        if c in fixed:
+            raise ValueError("fixed character %s in to-be-mapped character list"%c)
     return fixed
     
 def get_keyslots():    
@@ -163,10 +172,9 @@ def get_keyslots():
         keyslots_file = f.read().splitlines()
     keyslots = [c.strip() for c in keyslots_file]    
     
-    numbers = pd.read_csv(_numbers_file, index_col=1, sep="\t", encoding='utf-8', quoting=3)
-    numbers = numbers.to_dict()["keyslot"]
+    fixed = get_fixed_mapping()
     
-    for n_slot in numbers.values(): 
+    for n_slot in fixed.values(): 
         try:
             keyslots.remove(n_slot)
         except ValueError:
@@ -238,28 +246,30 @@ def get_probabilities(corpus_weights={}):
                 single = pd.read_csv(l_file, sep=" ", encoding="utf-8", index_col=0, quoting=3)
                 single = single.to_dict()[u'frequency']
                 #weight according to given weight:
-                weight = 0
+                weight = -1
                 for k,v in corpus_weights.iteritems():
                     if k in l_file:
                         weight = v
                         break;
-                if weight == 0:
+                if weight == -1:
                     raise ValueError('no weight found for file: %s'%l_file)
                                    
                 if len(p_single) == 0:
                     p_single = {c:v*weight for c,v in single.iteritems()}     
                 else:
                     p_single = {c:((v*weight) + p_single[c]) for c,v in single.iteritems()}     
+                
+                weight=-1
                 #the same for the bigrams
                 bigrams = _read_tuple_list_to_dict(b_file)
                 for k,v in corpus_weights.iteritems():
                     if k in b_file:
                         weight = v
                         break;
-                if weight == 0:
+                if weight == -1:
                     raise ValueError('no weight found for file: %s'%b_file)                
                 if len(p_bigrams) == 0:
-                    p_bigrams = {c:v*weight for c,v in bigrams.iteritems()}     
+                    p_bigrams = {c:v*weight for c,v in bigrams.iteritems()}  
                 else:
                     p_bigrams = {c:((v*weight) + p_bigrams[c]) for c,v in bigrams.iteritems()}    
         else:
@@ -283,19 +293,22 @@ def get_probabilities(corpus_weights={}):
     return p_single, p_bigrams
 
     
-def derive_probabilities_from_raw_values(letter_file, bigram_file, scenario="", name_addition=""):
+def derive_probabilities_from_raw_values(letter_file, bigram_file, scenario="", character_set = "", name_addition=""):
     """
         Derives the letter and bigram level probabilities from the given raw probability files for *all* characters and bigrams
         Takes care of combined characters and distributing the frequencies accordingly. Then writes them to a file for later use.
-        Both contain the frequencies of both, letters and characters, as well as letter-character and character-character pairs
-        The letters and characters that have no frequency available, get half of the lowest frequency 
+        Both contain the frequencies of both, letters and characters (+ fixed characters),
+        as well as letter-character and character-character pairs
+        The letters and characters that have no frequency available, get zero frequency.
         At the end writes the frequencies to the corresponding scenario file in the input folder.
         
     """
-    if scenario != "":
-        set_scenario_files(scenario)
-    all_chars = get_characters() + get_letters()
-    print all_chars
+    if scenario != "" and character_set != "":
+        set_scenario_files(scenario, character_set)
+        
+    #character, fixed character, letters
+    all_chars = get_characters() + get_letters() + get_fixed_mapping().keys()
+    
     #1. read the frequencies from the corresponding files as they are
     p_single_all = pd.read_csv(letter_file, sep=" ", encoding="utf-8", index_col=0, quoting=3)
     p_single_all = p_single_all.to_dict()[u'frequency']
@@ -438,14 +451,14 @@ def derive_probabilities_from_raw_values(letter_file, bigram_file, scenario="", 
                 
         
     #Write BIGRAMS  to file
-    f = codecs.open("input/frequency_bigrams_"+scenario +name_addition+".txt" ,'w', encoding="utf-8")    
+    f = codecs.open("input/frequency_bigrams"+name_addition+"_"+character_set+".txt" ,'w', encoding="utf-8")    
     for (c1,c2),v in p_bigrams_normalized.items():
         f.write("%s %s %s"%(c1,c2,repr(float(v))))
         f.write("\n")
     f.close()
 
     #Write LETTERS  to file
-    f = codecs.open("input/frequency_letters_"+scenario +name_addition+".txt",'w', encoding="utf-8")
+    f = codecs.open("input/frequency_letters"+name_addition+"_"+character_set+".txt",'w', encoding="utf-8")
     f.write("letter frequency\n")
     for c,v in p_single_normalized.items():
         f.write("%s %s"%(c,repr(v)))
@@ -460,13 +473,16 @@ def get_ergonomics():
     ergonomics = _read_tuple_list_to_dict(_ergonomics_file)
     return ergonomics
 
-def get_performance():
+def get_performance(normalize=1):
     """
         Returns a dictionary with letter-character tuples to performance values
     """
     #Performance: (key, letter)->t
     performance = _read_tuple_list_to_dict(_performance_file)
-    return normalize_dict_values(performance)
+    if normalize:
+        return normalize_dict_values(performance)
+    else:
+        return performance
 
 def decompose(c):
     try:
@@ -602,8 +618,9 @@ def normalize_dict_values(d):
     maximum = np.max(d.values())
     minimum = np.min(d.values())
     sum_all = np.sum(d.values())
+    new_dict = {}
     for k, v in d.iteritems():
-        d[k] = (v - minimum) / float(maximum - minimum)        
+        new_dict[k] = (v - minimum) / float(maximum - minimum)        
         #d[k] = d[k] / float(nonzeros)
         #d[k] = v / float(sum_all)
-    return d
+    return new_dict

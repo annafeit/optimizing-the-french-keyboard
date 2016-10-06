@@ -71,8 +71,8 @@ def accu_get_objectives(mapping, w_p, w_a, w_f, w_e,\
     for c, s in mapping.iteritems():        
         P+=x_P[c,s]            
         A+=x_A[c,s]
-        if x_A[c,s]>0:
-            print '%s: %f'%(c, x_A[c,s])
+        #if x_A[c,s]>0:
+            #print '%s: %f'%(c, x_A[c,s])
         F+=x_F[c,s]
         E+=x_E[c,s] 
     lin_A = A
@@ -88,8 +88,8 @@ def accu_get_objectives(mapping, w_p, w_a, w_f, w_e,\
                 s2 = mapping[c2]                
                 v = prob_sim_matrix[c1,c2]*distance_level_0[s1,s2]
                 A += v
-                if v>0:
-                    print '%s, %s: %f'%(c1, c2, v)
+                #if v>0:
+                    #print '%s, %s: %f'%(c1, c2, v)
     print 'quadratic Association: %.4f'%(A - lin_A)
     objective =  w_p*P + w_a*A + w_f*F + w_e*E
     return objective, P, A, F, E
@@ -130,12 +130,19 @@ def get_linear_costs(w_p, w_a, w_f, w_e,
                     P += (p_bigram[(l,c)]*performance[(azerty[l],s)])            
                 #update association. This is symmetric, so we add it twice to make it comparable with the other scores
                 if (c,l) in similarity_c_l:
-                    A += 2*((p_single[c] + p_single[l])*similarity_c_l[(c,l)]*distance_level_0[s,azerty[l]])
+                    A += 2*((p_single[c] + p_single[l])*similarity_c_l[(c,l)]*distance_level_0[s,azerty[l]])                    
                 #update ergonomics
                 if (c,l) in p_bigram:                
                     E += (p_bigram[(c,l)]*ergonomics[(s,azerty[l])])
                 if (l,c) in p_bigram:
                     E += (p_bigram[(l,c)]*ergonomics[(azerty[l],s)])
+            #also add similarity to fixed special characters as a linear cost
+            fixed_mapping = get_fixed_mapping()
+            for f in fixed_mapping.keys():
+                if (f,c) in similarity_c_c.keys():
+                    A += 2*((p_single[c] + p_single[f])*similarity_c_l[(f,c)]*distance_level_0[s,fixed_mapping[f]])
+                elif (c,f) in similarity_c_c.keys():
+                    A += 2*((p_single[c] + p_single[f])*similarity_c_l[(c,f)]*distance_level_0[s,fixed_mapping[f]])
             x_P[c,s] = P
             x_A[c,s] = A
             x_F[c,s] = F
@@ -180,7 +187,7 @@ def normalize_dict_values(d):
     #nonzeros = len([v for v in d.values() if not v == 0])
     maximum = np.max(d.values())
     minimum = np.min(d.values())
-    sum_all = np.sum(d.values())
+    #sum_all = np.sum(d.values())
     for k, v in d.iteritems():
         d[k] = (v - minimum) / float(maximum - minimum)        
         #d[k] = d[k] / float(nonzeros)

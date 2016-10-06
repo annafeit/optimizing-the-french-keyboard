@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import pandas as pd
+from pandas.tools.plotting import parallel_coordinates
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import seaborn as sns
@@ -8,21 +9,118 @@ import codecs
 import re
 from objectives import *
 from read_input import *
+from mapping import *
 
 PYTHONIOENCODING="utf-8"
 
+def swap_and_plot(mapping, char1, char2, corpus_weights, w_p, w_a, w_f, w_e, plot=True):
+    #read in mapping
+    if type(mapping)==str or type(mapping)==unicode:
+        if mapping.split(".")[-1] == "mst":
+            mapping, obj = create_map_from_reformulation(mapping)
+        elif mapping.split(".")[-1] == "txt":
+            mapping = create_map_from_txt(mapping)
 
+    if char1 not in mapping:
+        print("%s not in mapping"%char1)
+        return
+    if char2 not in mapping:
+        print("%s not in mapping"%char2)
+        return
+    
+    #create swapped mapping
+    new_mapping = mapping.copy()
+    new_mapping[char1] = mapping[char2]
+    new_mapping[char2] = mapping[char1]
+    
+    
+    azerty,\
+    characters,\
+    keyslots,\
+    letters,\
+    p_single, p_bigram,\
+    performance,\
+    similarity_c_c, similarity_c_l,\
+    distance_level_0, distance_level_1,\
+    ergonomics\
+     = get_all_input_values(corpus_weights)
+
+    linear_cost, x_P, x_A, x_F, x_E = get_linear_costs(w_p, w_a, w_f, w_e, 
+                               azerty,\
+                               characters,\
+                               keyslots,\
+                               letters,\
+                               p_single, p_bigram,\
+                               performance,\
+                               similarity_c_c, similarity_c_l,\
+                               distance_level_0, distance_level_1,\
+                               ergonomics)
+
+    prob_sim_matrix = get_quadratic_prob_similarity_matrix(characters,\
+                           keyslots,\
+                           p_single,\
+                           similarity_c_c, similarity_c_l)
+
+    #Function to evaluate a mapping
+    def evaluate_mapping(new_map):
+        P=0
+        A=0
+        F=0
+        E=0
+        for c, s in new_map.iteritems():        
+            P+=x_P[c,s]            
+            A+=x_A[c,s]
+            F+=x_F[c,s]
+            E+=x_E[c,s] 
+        for (c1,c2) in similarity_c_c:
+            if c1 in new_map and c2 in new_map:
+                s1 = new_map[c1]
+                s2 = new_map[c2]                
+                v = prob_sim_matrix[c1,c2]*distance_level_0[s1,s2]
+                A += v 
+
+        objective =  w_p*P + w_a*A + w_f*F + w_e*E
+        return objective, P, A, F, E
+    
+    objective, P, A, F, E = evaluate_mapping(mapping)
+    new_objective, new_P, new_A, new_F, new_E = evaluate_mapping(new_mapping)
+    
+    plot_mapping(new_mapping, corpus_weights = corpus_weights, 
+                 w_p=w_p, w_a=w_a, w_f=w_f, w_e=w_e, 
+                 p=new_P, a=new_A, f=new_F, e=new_E, objective=new_objective)
+    
+    if plot:
+        fig,axes = plt.subplots(1,2)
+        fig.set_size_inches(10,5)
+        w = 0.8
+
+        axes[1].bar([0,1,2,3,4], 
+                    [new_objective-objective,new_P-P,new_A-A,new_F-F,new_E-E], width=w)
+
+        axes[1].set_xticks([0+w/2,1+w/2,2+w/2,3+w/2,4+w/2])
+        axes[1].set_xticklabels(["obj", "P", "A", "F", "E"])
+        axes[1].set_ylabel("Absolute difference")
+
+        axes[0].bar([0,1,2,3,4], 
+                    [100*(new_objective-objective) / objective, 100*(new_P-P)/P,100*(new_A-A)/A,100*(new_F-F)/F,100*(new_E-E)/E], width=w)
+
+        axes[0].set_xticks([0+w/2,1+w/2,2+w/2,3+w/2,4+w/2])
+        axes[0].set_xticklabels(["obj", "P", "A", "F", "E"])
+        axes[0].set_ylabel("Relative difference (%)")
+
+        fig.tight_layout()
+    return new_mapping
+    
 def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
-                 corpus_weights=-1, quadratic=-1,\
+                 corpus_weights=-1, quadratic=1,\
                  objective=-1,\
                  p=-1, a=-1, f=-1, e=-1, w_p=-1,w_a=-1, w_f=-1, w_e=-1 ):
     """
     Plots the given mapping.
     Mapping can be a path to the mapping file, created by the reformulation, or an actual mapping. 
     If no objective is given, it computes the objective values.
-    """
-    print mapping
-    if type(mapping)==str:
+    """    
+    if type(mapping)==str or type(mapping)==unicode:
         if mapping.split(".")[-1] == "mst":
             mapping, obj = create_map_from_reformulation(mapping)
         elif mapping.split(".")[-1] == "txt":
@@ -121,8 +219,9 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
             ax.text(x,y,l,            
                 horizontalalignment=ha,
                 verticalalignment=va,
-                fontsize=10,
-                color=(0.4,0.4,0.4)        
+                fontsize=14,
+                fontweight='bold',
+                color='k'#(0.4,0.4,0.4)        
                 )
             
    
@@ -158,8 +257,9 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
         ax.text(x,y,l,            
             horizontalalignment=ha,
             verticalalignment=va,
-            fontsize=10,
-            color=(0.4,0.4,0.4)        
+            fontsize=14,
+            fontweight='bold',
+            color= 'k'#(0.4,0.4,0.4)        
          )
            
     #Add mapping annotation
@@ -200,7 +300,7 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
         ax.text(x,y,l,            
             horizontalalignment=ha,
             verticalalignment=va,
-            fontsize=12,
+            fontsize=11,
             color=c        
             )
     title = ""
@@ -216,6 +316,7 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
     plt.axis('off')
     if not plotname=="":
         fig.savefig(plotname, dpi=300, bbox_inches='tight')    
+            
     
 def log_mapping(mapping, path, objective=""):
     """
@@ -223,58 +324,106 @@ def log_mapping(mapping, path, objective=""):
         character key
     """
     mstfile = codecs.open(path, 'w', encoding="utf-8")
-    if not objective=="":
-        mstfile.write('# Objective %e\n' %(objective))
     for character, key in mapping.iteritems():        
         mstfile.write('%s %s\n' % (character, key))       
     mstfile.close()
 
-def create_map_from_txt(path):    
-    """
-    Reads a mapping from a file
-    Each line must have the form character - space - key
-    lines starting with # are ignored
-    """
-    mst = codecs.open(path, 'r', encoding="utf-8")    
-    all_lines = mst.read().splitlines()
 
-    mapping = {}
-    for line in all_lines:
-        if not line[0] == "#":            
-            var_val = line.split(" ") 
-            mapping[var_val[0]] = var_val[1]
-            
-    mst.close()
-    return mapping
 
-def create_map_from_reformulation(path): 
-    """ 
-        creates the mapping from the refomulated solution .mst file
-    """
-    #read in characters in keyslots
-    keyslots = get_keyslots()
-    characters = get_characters()
+def character_swap_with_all(mapping, char, corpus_weights, w_p, w_a, w_f, w_e):
+    sns.set_style("whitegrid")
+    #Get all input data and costs
+    azerty,\
+    characters,\
+    keyslots,\
+    letters,\
+    p_single, p_bigram,\
+    performance,\
+    similarity_c_c, similarity_c_l,\
+    distance_level_0, distance_level_1,\
+    ergonomics\
+     = get_all_input_values(corpus_weights)
+
+    linear_cost, x_P, x_A, x_F, x_E = get_linear_costs(w_p, w_a, w_f, w_e, 
+                               azerty,\
+                               characters,\
+                               keyslots,\
+                               letters,\
+                               p_single, p_bigram,\
+                               performance,\
+                               similarity_c_c, similarity_c_l,\
+                               distance_level_0, distance_level_1,\
+                               ergonomics)
+
+    prob_sim_matrix = get_quadratic_prob_similarity_matrix(characters,\
+                           keyslots,\
+                           p_single,\
+                           similarity_c_c, similarity_c_l)
+
+    if type(mapping)==str or type(mapping)==unicode:
+        if mapping.split(".")[-1] == "mst":
+            mapping, obj = create_map_from_reformulation(mapping)
+        elif mapping.split(".")[-1] == "txt":
+            mapping = create_map_from_txt(mapping)
+
+    #Function to evaluate a mapping
+    def evaluate_mapping(new_map):
+        P=0
+        A=0
+        F=0
+        E=0
+        for c, s in new_map.iteritems():        
+            P+=x_P[c,s]            
+            A+=x_A[c,s]
+            F+=x_F[c,s]
+            E+=x_E[c,s] 
+        for (c1,c2) in similarity_c_c:
+            if c1 in new_map and c2 in new_map:
+                s1 = new_map[c1]
+                s2 = new_map[c2]                
+                v = prob_sim_matrix[c1,c2]*distance_level_0[s1,s2]
+                A += v 
+
+        objective =  w_p*P + w_a*A + w_f*F + w_e*E
+        return objective, P, A, F, E
+
+    #switch with each other character and see how the costs change
+    print("Swapping characters")
+    objective, P, A, F, E = evaluate_mapping(mapping)
     
-    #read in mst file line by line and create mapping
-    mst = codecs.open(path, 'r', encoding="utf-8")
-    first_line = mst.readline()
-    parts = first_line.split(" ")
-    objective = float(parts[-1])
-    all_lines = mst.read().splitlines()
+    df = pd.DataFrame(columns=['P', 'A', 'F', 'E', 'obj'], index=mapping.keys())
+    change_P = {}
+    change_A = {}
+    change_F = {}
+    change_E = {}
+    change_objective = {}
+    for c, s in mapping.iteritems():
+        if c!= char:
+            new_mapping = mapping.copy()
+            new_mapping[c] = mapping[char]
+            new_mapping[char] = s
+            objective_new, P_new, A_new, F_new, E_new = evaluate_mapping(new_mapping)
+            df.loc[c] = [P_new - P, A_new - A, F_new - F, E_new - E, objective_new - objective]    
+    
+    fig,ax=plt.subplots(1)
+    sns.boxplot(data=df, ax=ax, showfliers=False)
+    xlims=ax.get_xlim()
+    ax.plot(xlims, [0,0], color='k')
+    ax.set_xticklabels(["P", "A", "F", "E", "obj"]);
+    
+    #Use this code to also plot a parallel coordinates plot
+    fig, ax=plt.subplots(1)
+    df_2 = df.reset_index().reset_index()
+    df_2 = df_2.set_index("index")
+    df_2.loc[:,"dummy"] = "0"
+    df_2.columns = ["letter", "P", "A", "F", "E", "obj", "dummy"]
 
-    mapping = {}
-    for line in all_lines:        
-        var_val = line.split(" ")
-        variable = var_val[0]
-        #take only "x" decision variables which are set to 1
-        if var_val[1] == "1" and variable[0] =="x":
-            #decode number
-            maps = variable[2:-1].split(",")
-            c_number = int(maps[0])
-            s_number = int(maps[1])
-            #map number to character/keyslot
-            if c_number < len(characters):
-                character = characters[c_number]
-                slot = keyslots[s_number]
-                mapping[character] = slot
-    return mapping, objective
+    min_all = df_2[["P", "A", "F", "E", "obj"]].min().min()
+    max_all = df_2[["P", "A", "F", "E", "obj"]].max().max()
+    diff = max_all - min_all
+    df_2["letter"] = df_2.letter.apply(lambda x: (max_all*x/float(df_2.letter.max())))
+
+    parallel_coordinates(df_2, "dummy", ax=ax)
+    xlims=ax.get_xlim()
+    ax.plot(xlims, [0,0], color='k')
+    fig.set_size_inches(20,10)

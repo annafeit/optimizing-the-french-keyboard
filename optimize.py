@@ -5,6 +5,12 @@ from test_model import *
 from objectives import *
 PYTHONIOENCODING="utf-8"
 
+capitals ={u'à':u'À',u'â':u'Â',u'ç':u'Ç',u'é':u'É',u'è':u'È',u'ê':u'Ê',\
+               u'ë':u'Ë',u'î':u'Î',u'ï':u'Ï',u'ô':u'Ô',\
+               u'ù':u'Ù',u'û':u'Û',u'ü':u'Ü',u'ÿ':u'Ÿ',u'æ':u'Æ',u'œ':u'Œ',\
+               u'ß':u'ẞ',u'þ':u'Þ',u'ð':u'Ð',u'ŋ':u'Ŋ',u'ĳ':u'Ĳ',\
+               u'ə':u'Ə',u'ʒ':u'Ʒ',u'ı':u'İ'}
+
 def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, corpus_weights, quadratic=0, capitalization_constraints=1, name="final"):
     """
         A wrapper for the _solve_the_keyboard_Problem function to use the standard test variables
@@ -49,7 +55,7 @@ def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, corpus_weights, quadratic=0, 
                  objective=obj,\
                  p=P, a=A, f=F, e=E, w_p=w_p,w_a=w_a, w_f=w_f, w_e=w_e)
     
-    log_mapping(mapping, "mappings/"+name+".mst", objective=obj)
+    log_mapping(mapping, "mappings/"+name+".txt", objective=obj)
     
     return mapping
     
@@ -66,11 +72,7 @@ def _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e,
                                distance_level_0, distance_level_1,\
                                ergonomics, quadratic=0, capitalization_constraints=1):    
     
-    capitals ={u'à':u'À',u'â':u'Â',u'ç':u'Ç',u'é':u'É',u'è':u'È',u'ê':u'Ê',\
-               u'ë':u'Ë',u'î':u'Î',u'ï':u'Ï',u'ô':u'Ô',\
-               u'ù':u'Ù',u'û':u'Û',u'ü':u'Ü',u'ÿ':u'Ÿ',u'æ':u'Æ',u'œ':u'Œ',\
-               u'ß':u'ẞ',u'þ':u'Þ',u'ð':u'Ð',u'ŋ':u'Ŋ',u'ĳ':u'Ĳ',\
-               u'ə':u'Ə',u'ʒ':u'Ʒ',u'ı':u'İ'}
+    
     
     #Test some stuff in advance to avoid infeasbility:
     if len(characters) > len(keyslots):
@@ -297,12 +299,6 @@ def optimize_reformulation(lp_path):
     return model
 
 def add_capitalization_constraints(lp_path):
-    capitals ={u'à':u'À',u'â':u'Â',u'ç':u'Ç',u'é':u'É',u'è':u'È',u'ê':u'Ê',\
-               u'ë':u'Ë',u'î':u'Î',u'ï':u'Ï',u'ô':u'Ô',\
-               u'ù':u'Ù',u'û':u'Û',u'ü':u'Ü',u'ÿ':u'Ÿ',u'æ':u'Æ',u'œ':u'Œ',\
-               u'ß':u'ẞ',u'þ':u'Þ',u'ð':u'Ð',u'ŋ':u'Ŋ',u'ĳ':u'Ĳ',\
-               u'ə':u'Ə',u'ʒ':u'Ʒ',u'ı':u'İ'}
-    
     lp_original = open(lp_path, 'r')
     new_path = ".".join(lp_path.split(".")[:-1])+"_capital."+lp_path.split(".")[-1]
     new_lp = open(new_path, 'w')
@@ -352,5 +348,99 @@ def add_capitalization_constraints(lp_path):
     return new_path
 
     
+def local_optimization(mapping, w_p=0.25, w_a=0.25, w_f=0.25, w_e=0.25, corpus_weights={}):
+    """
+    For a given mapping computes the local optimum in the neighborhood of that mapping (swapping two characters)
+    """
+    #read in mapping as dict
+    if type(mapping)==str or type(mapping)==unicode:
+        if mapping.split(".")[-1] == "mst":
+            mapping, obj = create_map_from_reformulation(mapping)
+        elif mapping.split(".")[-1] == "txt":
+            mapping = create_map_from_txt(mapping)
         
- 
+    #Get all input data and costs
+    azerty,\
+    characters,\
+    keyslots,\
+    letters,\
+    p_single, p_bigram,\
+    performance,\
+    similarity_c_c, similarity_c_l,\
+    distance_level_0, distance_level_1,\
+    ergonomics\
+     = get_all_input_values(corpus_weights)
+
+    linear_cost, x_P, x_A, x_F, x_E = get_linear_costs(w_p, w_a, w_f, w_e, 
+                               azerty,\
+                               characters,\
+                               keyslots,\
+                               letters,\
+                               p_single, p_bigram,\
+                               performance,\
+                               similarity_c_c, similarity_c_l,\
+                               distance_level_0, distance_level_1,\
+                               ergonomics)
+
+    prob_sim_matrix = get_quadratic_prob_similarity_matrix(characters,\
+                           keyslots,\
+                           p_single,\
+                           similarity_c_c, similarity_c_l)
+
+    #Function to evaluate a mapping
+    def evaluate_mapping(new_map):
+        P=0
+        A=0
+        F=0
+        E=0
+        for c, s in new_map.iteritems():        
+            P+=x_P[c,s]            
+            A+=x_A[c,s]
+            F+=x_F[c,s]
+            E+=x_E[c,s] 
+        for (c1,c2) in similarity_c_c:
+            if c1 in new_map and c2 in new_map:
+                s1 = new_map[c1]
+                s2 = new_map[c2]                
+                v = prob_sim_matrix[c1,c2]*distance_level_0[s1,s2]
+                A += v 
+
+        objective =  w_p*P + w_a*A + w_f*F + w_e*E
+        return objective, P, A, F, E
+
+    #switch with each other character and see how the costs change
+    print("Swapping characters")
+    
+    for c1 in characters:
+        s1 = mapping[c1]
+        objective, P, A, F, E = evaluate_mapping(mapping)
+        min_obj = objective
+        min_char = c1
+        for c2 in characters:           
+            new_mapping = mapping.copy()
+            new_mapping[c1] = mapping[c2]
+            new_mapping[c2] = s1
+            objective_new, P_new, A_new, F_new, E_new = evaluate_mapping(new_mapping) 
+            if objective_new < min_obj:
+                min_obj = objective_new
+                min_char = c2
+        
+        #change mapping
+        if min_char != c1:
+            mapping[c1] = mapping[min_char]
+            mapping[min_char] = s1
+            print("Swapped %s and %s"%(c1,min_char))
+        
+    return mapping
+
+def check_capitalization_constraints(mapping):
+    """ 
+    for a given mapping checks if it fulfills the capitalization constraints
+    """    
+    characters = mapping.keys()
+    for c, s_c in capitals.iteritems():
+        if c in characters and s_c in characters:
+            k = mapping[c]
+            if mapping[s_c] != k+"_Shift":
+                return False
+    return True
