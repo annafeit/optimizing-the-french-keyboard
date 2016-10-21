@@ -3,7 +3,7 @@ from read_input import *
 import numpy as np 
 PYTHONIOENCODING="utf-8"
 
-def create_reformulation_input(w_P, w_A, w_F, w_E, corpus_weights, scenario, quadratic=1):
+def create_reformulation_input(w_P, w_A, w_F, w_E, corpus_weights, filename, quadratic=1):
     
     """
         creates the file reformulation_input.txt which is used as input for the kaufmann-broeckx reformulation done in the C++ scripts.
@@ -35,7 +35,12 @@ def create_reformulation_input(w_P, w_A, w_F, w_E, corpus_weights, scenario, qua
                                                ergonomics)
     
     #Writes an input file for the reformualtion
-    f = codecs.open("reformulation/reformulation_input_"+scenario+".txt", 'w', encoding="utf-8")
+    f = codecs.open("reformulation/input/"+filename+".txt", 'w', encoding="utf-8")
+    f.write("# scenario=%s,set=%s,w_P=%f,w_A=%f,w_F=%f,w_E=%f,w_formal=%f,w_twitter=%f,w_code=%f\n"%(scenario,char_set,
+                                                                                w_P,w_A, w_F, w_E, 
+                                                                                corpus_weights["formal"], 
+                                                                                corpus_weights["twitter"],
+                                                                                corpus_weights["code"]))
     f.write("# number of letters and keys\n")
     f.write(str(len(keyslots))+"\n")
     f.write("# w_A*probabilities*similarities\n")

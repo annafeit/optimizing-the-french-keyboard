@@ -31,6 +31,9 @@
 using namespace std;
 
 int main() {
+  // transfer first line of comments to new file
+  //cin >> firstcomment;
+  //cout << firstcomment;
   
   unsigned int nn;
   ignoreComment();

@@ -13,6 +13,7 @@ import re
 from objectives import *
 from read_input import *
 from mapping import *
+import re
 
 PYTHONIOENCODING="utf-8"
 
@@ -156,35 +157,16 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
     if azerty == -1:
         azerty = get_azerty()
     if numbers == -1:
-        numbers = get_fixed_characters()
+        numbers = get_fixed_mapping()
     if letters == -1:
         letters = get_letters()
         
     with open('input\\all_slots.txt') as file:    
         all_slots = file.read().splitlines()    
-    #box dimensions
-    key_height = 4
-    key_width = 4
-
-    #keyboard specifics
-    row_distance = 0.5
-    column_distance = 0.5
-    row_shift = {'A':0, 'B':0, 'C':key_width/2, 'D':key_width, 'E':3*key_width/2}
-
-    #text positions
-    pos_normal_x = 0.5
-    pos_normal_y = 0.5
-    pos_shift_x = 0.5
-    pos_shift_y = key_height-0.5
-    pos_alt_x = key_width-0.5
-    pos_alt_y = 0.5
-    pos_alt_shift_x = key_width-0.5
-    pos_alt_shift_y = key_height-0.5
-
-
-    fig, ax = plt.subplots(1,1)
+        fig, ax = plt.subplots(1,1)
+        
     fig.set_size_inches(10,4)
-    row_numbers = {u"A":0, u"B":1, u"C":2, u"D":3, u"E":4}
+    
     for slot in all_slots:
         row = row_numbers[slot[0]]
         column = int(slot[1:3])
@@ -211,7 +193,33 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
 
     #Add fixed character annotation
     for l in letters:
-        if not l == "space":
+        if not l == "space":            
+            slot = azerty[l]
+            row = row_numbers[slot[0]]
+            column = int(slot[1:3])
+
+            l=l.capitalize()
+            
+            #capital letters on Shifted level
+            pos_x = pos_shift_x
+            pos_y = pos_shift_y
+            ha = 'left'
+            va = 'top'
+            x = (column*key_width)+column*column_distance + pos_x - row_shift[slot[0]]
+            y = (row*key_height) + row*row_distance + pos_y
+
+            ax.text(x,y,l,            
+                horizontalalignment=ha,
+                verticalalignment=va,
+                fontsize=14,
+                fontweight='bold',
+                color='k'#(0.4,0.4,0.4)        
+                )
+            
+   
+    for l in numbers:  
+        r = re.compile("[A-Z]")
+        if not r.findall(l):
             slot = azerty[l]
             row = row_numbers[slot[0]]
             column = int(slot[1:3])
@@ -245,46 +253,8 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
                 verticalalignment=va,
                 fontsize=14,
                 fontweight='bold',
-                color='k'#(0.4,0.4,0.4)        
-                )
-            
-   
-    for l in numbers:
-        slot = azerty[l]
-        row = row_numbers[slot[0]]
-        column = int(slot[1:3])
-        level = slot[4:]
-
-        if level == "":
-            pos_x = pos_normal_x
-            pos_y = pos_normal_y
-            ha = 'left'
-            va = 'bottom'
-        if level == "Shift":
-            pos_x = pos_shift_x
-            pos_y = pos_shift_y
-            ha = 'left'
-            va = 'top'
-        if level == "Alt":
-            pos_x = pos_alt_x
-            pos_y = pos_alt_y
-            ha = 'right'
-            va = 'bottom'
-        if level == "Alt_Shift":
-            pos_x = pos_alt_shift_x
-            pos_y = pos_alt_shift_y
-            ha = 'right'
-            va = 'top'
-        x = (column*key_width)+column*column_distance + pos_x - row_shift[slot[0]]
-        y = (row*key_height) + row*row_distance + pos_y
-
-        ax.text(x,y,l,            
-            horizontalalignment=ha,
-            verticalalignment=va,
-            fontsize=14,
-            fontweight='bold',
-            color= 'k'#(0.4,0.4,0.4)        
-         )
+                color= 'k'#(0.4,0.4,0.4)        
+             )
            
     #Add mapping annotation
     for (l,slot) in mapping.iteritems():        
@@ -516,34 +486,19 @@ def plot_keyboard_heatmap(values, values_norm, level_considered, title="", unit=
     plt.axis('off')
 
 
-    #Add fixed character annotation
+    #Add fixed character annotation    
     for l in letters:
         if not l == "space":
             slot = azerty[l]
             row = row_numbers[slot[0]]
-            column = int(slot[1:3])
-            level = slot[4:]
-
-            if level == "":
-                pos_x = pos_normal_x
-                pos_y = pos_normal_y
-                ha = 'left'
-                va = 'bottom'
-            if level == "Shift":
-                pos_x = pos_shift_x
-                pos_y = pos_shift_y
-                ha = 'left'
-                va = 'top'
-            if level == "Alt":
-                pos_x = pos_alt_x
-                pos_y = pos_alt_y
-                ha = 'right'
-                va = 'bottom'
-            if level == "Alt_Shift":
-                pos_x = pos_alt_shift_x
-                pos_y = pos_alt_shift_y
-                ha = 'right'
-                va = 'top'
+            column = int(slot[1:3])            
+            l=l.capitalize()
+            #Shifted level
+            pos_x = pos_shift_x
+            pos_y = pos_shift_y
+            ha = 'left'
+            va = 'top'
+            
             x = (column*key_width)+column*column_distance + pos_x - row_shift[slot[0]]
             y = (row*key_height) + row*row_distance + pos_y
 

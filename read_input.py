@@ -13,39 +13,47 @@ _fixed_file = ""
 _letter_file = 'input/letters.txt'
 _character_file = ""
 _azerty_file = "input/layouts/azerty.csv"
-_similarity_c_c_file = 'input/similarity_c_c_m.xlsx'
-_similarity_c_l_file = 'input/similarity_c_l_m.xlsx'
-_distance_file = "input/distance.xlsx"
-_distance_file_0 = "input/distance0.txt"
-_distance_file_1 = "input/distance1.txt"
+_similarity_c_c_file = 'input/similarity/similarity_c_c_m.xlsx'
+_similarity_c_l_file = 'input/similarity/similarity_c_l_m.xlsx'
+_distance_file = "input/distance/distance.xlsx"
+_distance_file_0 = "input/distance/distance0.txt"
+_distance_file_1 = "input/distance/distance1.txt"
 _frequency_letter_file = ""
 _frequency_bigram_file = ""
-_ergonomics_file = "input/ergonomics_antti.csv"
-_performance_file = "input/performance_daryl.csv"
+_ergonomics_file = "input/ergonomics/ergonomics_antti.csv"
+_performance_file = "input/performance/performance_daryl.csv"
 scenario = ""
+char_set = ""
     
-def set_scenario_files(scenario_number, character_set):
+def set_scenario_files(scenario_name, character_set):
     global scenario
-    scenario = scenario_number
+    scenario = scenario_name
+    
+    global char_set
+    char_set = character_set
     
     #File names for input values 
+    #only if MIN scenario, the fixed and variable slots change because ' and " are either fixed or not in the character set
     global _keyslots_file
-    _keyslots_file = 'input/variable_slots_'+scenario+'.txt'
-    
     global _fixed_file
-    _fixed_file= 'input/fixed_'+scenario+'.csv'
+    if scenario == "scenarioMIN":
+        _keyslots_file = 'input/variable slots/variable_slots_'+scenario+character_set+'.txt'
+        _fixed_file= 'input/fixed/fixed_'+scenario+character_set+'.csv'
+    else:
+        _keyslots_file = 'input/variable slots/variable_slots_'+scenario+'.txt'
+        _fixed_file= 'input/fixed/fixed_'+scenario+'.csv'
     
     global _character_file
-    _character_file= 'input/characters_'+scenario+character_set + '.txt'
+    _character_file= 'input/characters/characters_'+scenario+character_set + '.txt'
     
     #get all files with that scenario as a list!
-    os.chdir("input/")
+    os.chdir("input/frequencies")
     global _frequency_letter_file    
-    _frequency_letter_file =   ["input/"+f for f in glob.glob("frequency_letters_*_"+character_set+'.txt')]
+    _frequency_letter_file =   ["input/frequencies/"+f for f in glob.glob("frequency_letters_*_"+character_set+'.txt')]
    
     global _frequency_bigram_file
-    _frequency_bigram_file= ["input/"+f for f in glob.glob("frequency_bigrams_*_"+character_set+'.txt')]
-    os.chdir("../")
+    _frequency_bigram_file= ["input/frequencies/"+f for f in glob.glob("frequency_bigrams_*_"+character_set+'.txt')]
+    os.chdir("../..")
     
     
 
@@ -356,93 +364,72 @@ def derive_probabilities_from_raw_values(letter_file, bigram_file, scenario="", 
     #-------------- BIGRAM ------------------------
     #3. go through bigrams and correct them according to the given characters, 
     #that is letter pairs with accented characters need to be distributed to other letter pairs accoridng to the 
-     #keypresses that needed to be made.  
+    #keypresses that needed to be made.  
     p_bigrams_all = _read_tuple_list_to_dict(bigram_file)
     p_bigrams = {(c1,c2):0 for c1 in all_chars for c2 in all_chars}
     print(all_chars)
-    counter=0
-    for (c1,c2), v in p_bigrams_all.items():        
+    counter=0    
+    for (c1,c2), v in p_bigrams_all.items():            
         counter+= 1
         if (counter % 5000 == 0):
-            print("%i of %i"%(counter, len(p_bigrams_all)))
-        c1 = correct_diacritic(c1)
+            print("%i of %i"%(counter, len(p_bigrams_all)))                     
+        c1 = correct_diacritic(c1) 
         c2 = correct_diacritic(c2)
-        if (c1,c2) in p_bigrams.keys():
-            p_bigrams[(c1,c2)] += v
-        else:
-            if len(c1)==2 and "d" in c1: #strip off "d"
-                  c1 = c1[0]
-            if len(c2)==2 and "d" in c1: #strip off "d"
-                  c2 = c2[0]
-            if c1 in diacritic_unicode.keys():                  
-                #it's a single form of the diacritic mark, e.g. ~, which needs to be produced by the bigram ~ + space
-                diacritic = unicode_diacritic[diacritic_unicode[c1]] #get the right diacritic
-                p_bigrams[(diacritic, "space")] += v
-                
-                #test the same for c2
-                if c2 in diacritic_unicode.keys(): 
-                    diacritic2 = unicode_diacritic[diacritic_unicode[c2]] #get the right diacritic
-                    p_bigrams[("space", diacritic2)] += v
-                    p_bigrams[(diacritic2, "space")] += v
-                elif c2 in all_chars:
-                    p_bigrams[("space", c2)] += v
-            elif c2 in diacritic_unicode.keys(): 
-                diacritic2 = unicode_diacritic[diacritic_unicode[c2]] #get the right diacritic
-                p_bigrams[("space", diacritic2)] += v
-                if c1 in all_chars:
-                    p_bigrams[(c1, "space")] += v
-            else:
-                c1_d = decompose(c1)
-                c2_d = decompose(c2)
 
-                
-                if not c1 in all_chars:  #if the decomposable characters doesn't get its own key
-                    #check if its a composed letter. If not we don't care about it
-                    if len(c1_d)>1:                
-                        c1_1 = get_unicode_diacritic(c1_d[0])
-                        c1_2 = get_unicode_diacritic(c1_d[1])         
-                        #store bigram for the composition, if they are in the list. Else ignore.
-                        if c1_1 in all_chars and c1_2 in all_chars:
-                            p_bigrams[(c1_1, c1_2)] += v
-                            
-                        #now check transition to second letter
-                        if c2 in all_chars and c1_2 in all_chars:
-                            p_bigrams[(c1_2, c2)] += v
-                            
-                        elif len(c2_d)>1:
-                            #decompose again
-                            c2_1 = get_unicode_diacritic(c2_d[0])
-                            c2_2 = get_unicode_diacritic(c2_d[1])
-                            #add transition c1_2 - c2_1:
-                            if c1_2 in all_chars and c2_1 in all_chars:
-                                p_bigrams[(c1_2, c2_1)] += v
-                                
-                            # add transition c2_1 - c2_2:
-                            if c2_1 in all_chars and c2_2 in all_chars:
-                                p_bigrams[(c2_1, c2_2)] += v
-                                
-                    #else:
-                        #print "We don't care about", c1
-                elif not c2 in all_chars: #if the decomposable characters doesn't get its own key
-                    if len(c2_d)>1:
-                        c2_1 = get_unicode_diacritic(c2_d[0])
-                        c2_2 = get_unicode_diacritic(c2_d[1])
-                        #add transition c1 - c2_1:
-                        if c1 in all_chars and c2_1 in all_chars:
-                            p_bigrams[(c1, c2_1)] += v
-                            
-                        # add transition c2_1 - c2_2:
-                        if c2_1 in all_chars and c2_2 in all_chars:
-                            p_bigrams[(c2_1, c2_2)] += v
-                                
-                    #else:
-                        #print "We don't care about", c2
-     
-    
+        #decompose first character
+        c_c1 = []        
+        if c1 in all_chars:
+            #to-be-mapped character
+            c_c1 = [c1]
+        elif c1[0] in diacritic_unicode.keys():
+            # single form of the diacritic mark, e.g. ~, which needs to be produced by the bigram ~ + space
+            diacritic = unicode_diacritic[diacritic_unicode[c1]] #get the right diacritic
+            if diacritic in all_chars:
+                c_c1 = [diacritic, "space"]  
+        else:            
+            c1_d = decompose(c1)
+            if len(c1_d)>1:                
+                #composed character, otherwise its a character we don't care about
+                c1_1 = get_unicode_diacritic(c1_d[1])#decompose give diacritic and letter in wrong order
+                c1_2 = get_unicode_diacritic(c1_d[0])
+                if c1_1 in all_chars and c1_2 in all_chars:
+                    c_c1 = [c1_1, c1_2]
+
+        #decompose second character
+        c_c2 = []        
+        if c2 in all_chars:
+            #to-be-mapped character
+            c_c2 = [c2]
+        elif c2[0] in diacritic_unicode.keys():
+            # single form of the diacritic mark, e.g. ~, which needs to be produced by the bigram ~ + space
+            diacritic = unicode_diacritic[diacritic_unicode[c2]] #get the right diacritic        
+            if diacritic in all_chars:
+                c_c2 = [diacritic, "space"]          
+        else:            
+            c2_d = decompose(c2)
+            if len(c2_d)>1:                
+                #composed character, otherwise its a character we don't care about
+                c2_1 = get_unicode_diacritic(c2_d[1])#decompose give diacritic and letter in wrong order
+                c2_2 = get_unicode_diacritic(c2_d[0])
+                if c2_1 in all_chars and c2_2 in all_chars:
+                    c_c2 = [c2_1, c2_2]
+
+        #now add the frequency to the corresponding bigrams
+        # c_c1 and c_c2 can contain 0, 1, or 2 letters. If 0 ignore the bigram.        
+        if len(c_c1) > 0 and len(c_c2) > 0:
+            #add bigram for decomposed c1
+            if len(c_c1) == 2:            
+                p_bigrams[(c_c1[0],c_c1[1])] += v
+            #add bigram for decomposed c2
+            if len(c_c2) == 2:
+                p_bigrams[(c_c2[0],c_c2[1])] += v
+            #add bigram for transition from c1 to c2
+            p_bigrams[(c_c1[-1],c_c2[0])] += v            
+        
     minimum = np.min([v for v in p_bigrams.values() if v>0])
-    for (c1,c2),v in p_bigrams.items():
-        if v==0:
-            print(u"No frequency for (%s, %s)"%(c1,c2))
+    #for (c1,c2),v in p_bigrams.items():
+    #    if v==0:
+            #print(u"No frequency for (%s, %s)"%(c1,c2))
             #p_bigrams[c1,c2] = 0.5*minimum
                   
     # normalize
@@ -451,14 +438,14 @@ def derive_probabilities_from_raw_values(letter_file, bigram_file, scenario="", 
                 
         
     #Write BIGRAMS  to file
-    f = codecs.open("input/frequency_bigrams"+name_addition+"_"+character_set+".txt" ,'w', encoding="utf-8")    
+    f = codecs.open("input/frequencies/frequency_bigrams"+name_addition+"_"+character_set+".txt" ,'w', encoding="utf-8")    
     for (c1,c2),v in p_bigrams_normalized.items():
         f.write("%s %s %s"%(c1,c2,repr(float(v))))
         f.write("\n")
     f.close()
 
     #Write LETTERS  to file
-    f = codecs.open("input/frequency_letters"+name_addition+"_"+character_set+".txt",'w', encoding="utf-8")
+    f = codecs.open("input/frequencies/frequency_letters"+name_addition+"_"+character_set+".txt",'w', encoding="utf-8")
     f.write("letter frequency\n")
     for c,v in p_single_normalized.items():
         f.write("%s %s"%(c,repr(v)))
