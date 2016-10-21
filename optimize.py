@@ -11,8 +11,9 @@ capitals ={u'à':u'À',u'â':u'Â',u'ç':u'Ç',u'é':u'É',u'è':u'È',u'ê':u'�
                u'ß':u'ẞ',u'þ':u'Þ',u'ð':u'Ð',u'ŋ':u'Ŋ',u'ĳ':u'Ĳ',\
                u'ə':u'Ə',u'ʒ':u'Ʒ',u'ı':u'İ'}
 
-directory = "mappings" 
+directory = "mappings/" 
 firstline = "#"
+filename = "solution"
 
 def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, corpus_weights, quadratic=0, capitalization_constraints=1, name="final"):
     """
@@ -250,7 +251,7 @@ def opti_callback(model, where):
             obj = model.cbGet(GRB.callback.MIPSOL_OBJ)
             nodecnt = int(model.cbGet(GRB.callback.MIPSOL_NODCNT))
             print 'Found incumbent soln at node', nodecnt, 'objective', obj
-            simple_mst_writer(model, directory+filename+"_%.4f.mst'%obj, nodecnt, obj)
+            simple_mst_writer(model, directory+filename+'_%.4f.mst'%obj, nodecnt, obj)
     except GurobiError as e:
         print "Gurobi Error:"
         print e.errno
@@ -272,11 +273,16 @@ def optimize_reformulation(lp_path, capitalization=1):
         new_path = add_capitalization_constraints(lp_path)
     else:
         new_path = lp_path
-                              
+
+    global filename
+    filename = lp_path.split("/")[-1] 
+    filename = filename[:-3] #remove .lp
+    
     global firstline
-    filename = ".".join(lp_path.split("."))[:-1] 
-    reformualtionFile = open("reformulation/input/"+filename+".txt",'r')
-    firstline= lpfile.readline() + ",capitalization="+capitalization #save first line with weights and scenario
+    f = lp_path[:-3] #remove .lp
+    reformulationFile = open(f+".txt",'r')
+    line = reformulationFile.readline().strip()
+    firstline= line + ",capitalization=%i\n"%capitalization #save first line with weights and scenario
                               
     #add folder for logging intermediate solutions
     global directory 
