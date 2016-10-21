@@ -34,6 +34,7 @@ int main() {
   // transfer first line of comments to new file
   //cin >> firstcomment;
   //cout << firstcomment;
+  ignoreComment();
   
   unsigned int nn;
   ignoreComment();

@@ -11,6 +11,9 @@ capitals ={u'à':u'À',u'â':u'Â',u'ç':u'Ç',u'é':u'É',u'è':u'È',u'ê':u'�
                u'ß':u'ẞ',u'þ':u'Þ',u'ð':u'Ð',u'ŋ':u'Ŋ',u'ĳ':u'Ĳ',\
                u'ə':u'Ə',u'ʒ':u'Ʒ',u'ı':u'İ'}
 
+directory = "mappings" 
+firstline = "#"
+
 def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, corpus_weights, quadratic=0, capitalization_constraints=1, name="final"):
     """
         A wrapper for the _solve_the_keyboard_Problem function to use the standard test variables
@@ -221,6 +224,8 @@ def simple_mst_writer(model, mstfilename, nodecnt, obj):
     mstfile = open(mstfilename, 'w')
     varlist = model.getVars()
     soln    = model.cbGetSolution(varlist)
+    
+    mstfile.write(firstline) #add first line with weights and scenario
     mstfile.write('# MIP start from soln at node %d, Objective %e\n' %(nodecnt, obj))
     mapping = {}    
     for var, soln in zip(varlist, soln):
@@ -239,13 +244,13 @@ def simple_mst_writer(model, mstfilename, nodecnt, obj):
     mstfile.close()
     
     
-def opti_callback(model, where):
+def opti_callback(model, where):    
     try:
         if where == GRB.callback.MIPSOL:
             obj = model.cbGet(GRB.callback.MIPSOL_OBJ)
             nodecnt = int(model.cbGet(GRB.callback.MIPSOL_NODCNT))
             print 'Found incumbent soln at node', nodecnt, 'objective', obj
-            simple_mst_writer(model, 'mappings/solution_%.4f.mst'%obj, nodecnt, obj)
+            simple_mst_writer(model, directory+filename+"_%.4f.mst'%obj, nodecnt, obj)
     except GurobiError as e:
         print "Gurobi Error:"
         print e.errno
@@ -261,9 +266,24 @@ def create_mapping(m):
             mapping[c.decode("utf-8")] = s.decode("utf-8")       
     return mapping
 
-def optimize_reformulation(lp_path):
-    #add constraints
-    new_path = add_capitalization_constraints(lp_path)
+def optimize_reformulation(lp_path, capitalization=1):
+    #add capitalization constraints
+    if capitalization:                          
+        new_path = add_capitalization_constraints(lp_path)
+    else:
+        new_path = lp_path
+                              
+    global firstline
+    filename = ".".join(lp_path.split("."))[:-1] 
+    reformualtionFile = open("reformulation/input/"+filename+".txt",'r')
+    firstline= lpfile.readline() + ",capitalization="+capitalization #save first line with weights and scenario
+                              
+    #add folder for logging intermediate solutions
+    global directory 
+    directory = directory+filename+"/"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    
     model = read(new_path)  
     model.setParam('NodefileStart', 0.5)
     print "SETTING: nodefileStart = 0.5"

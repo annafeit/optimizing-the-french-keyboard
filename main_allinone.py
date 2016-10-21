@@ -22,9 +22,10 @@ create_reformulation_input(w_p, w_a, w_f, w_e, corpus_weights, filename,
                            quadratic=1)
 #run c++ code to reformulate the problem
 print("REFORMULATE")						   
-subprocess.call("./reformulation/kaufmannbroeckx << reformulation/input/"+filename+".txt >> reformulation/"+filename+".lp", shell=True, check=True)
-
+filein = open("reformulation/input/"+filename+".txt")
+fileout = open("reformulation/"+filename+".lp", 'w')
+subprocess.call('./reformulation/kaufmanbroeckx', stdin=filein, stdout=fileout, shell=True)
+fileout.flush()
 
 #optimize the reformulation
-
-#optimize_reformulation("reformulation/reformulation_input_scenario3.lp")
+optimize_reformulation("reformulation/"+filename+".lp", capitalization=1)
