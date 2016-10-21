@@ -1,4 +1,5 @@
 from objectives import * 
+import subprocess
 from read_input import *
 from plotting import *
 from reformulation_input import *
@@ -21,7 +22,7 @@ create_reformulation_input(w_p, w_a, w_f, w_e, corpus_weights, filename,
                            quadratic=1)
 #run c++ code to reformulate the problem
 print("REFORMULATE")						   
-subprocess.run("./reformulation/kaufmannbroeckx << reformulation/input/"+filename+".txt >> reformulation/"+filename+".lp", shell=True, check=True)
+subprocess.call("./reformulation/kaufmannbroeckx << reformulation/input/"+filename+".txt >> reformulation/"+filename+".lp", shell=True, check=True)
 
 
 #optimize the reformulation
