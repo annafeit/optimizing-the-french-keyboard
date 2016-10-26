@@ -15,7 +15,7 @@ directory = "mappings/"
 firstline = "#"
 filename = "solution"
 
-def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, corpus_weights, quadratic=0, capitalization_constraints=1, name="final"):
+def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, corpus_weights, quadratic=0, capitalization_constraints=1, name="final", minimize=True):
     """
         A wrapper for the _solve_the_keyboard_Problem function to use the standard test variables
     """
@@ -40,7 +40,7 @@ def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, corpus_weights, quadratic=0, 
                                performance,\
                                similarity_c_c, similarity_c_l,\
                                distance_level_0, distance_level_1,\
-                               ergonomics, quadratic=quadratic, capitalization_constraints=capitalization_constraints)
+                               ergonomics, quadratic=quadratic, capitalization_constraints=capitalization_constraints, minimize=minimize)
     
     #obj, P, A, F, E = accu_get_objectives(mapping, w_p, w_a, w_f, w_e, \
     #                           azerty,\
@@ -74,7 +74,7 @@ def _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e,
                                performance,\
                                similarity_c_c, similarity_c_l,\
                                distance_level_0, distance_level_1,\
-                               ergonomics, quadratic=0, capitalization_constraints=1):    
+                               ergonomics, quadratic=0, capitalization_constraints=1, minimize=True):    
     
     
     
@@ -143,7 +143,10 @@ def _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e,
     m._w_e = w_e
     
     # Set objective
-    m.setObjective((w_p*P)+(w_a*A)+(w_f*F)+(w_e*E), GRB.MINIMIZE)
+    if minimize:
+        m.setObjective((w_p*P)+(w_a*A)+(w_f*F)+(w_e*E), GRB.MINIMIZE)
+    else:
+        m.setObjective((w_p*P)+(w_a*A)+(w_f*F)+(w_e*E), GRB.MAXIMIZE)
     m.update()
     print "set objective"
     
@@ -292,6 +295,10 @@ def optimize_reformulation(lp_path, capitalization=1):
     
     model = read(new_path)  
     model.setParam('NodefileStart', 0.5)
+    model.setParam('WorkerPool', "halti,montblanc")
+    model.setParam('ConcurrentJobs', 6)
+    #model.setParam('WorkerPassword', "")
+    
     print "SETTING: nodefileStart = 0.5"
     print "optimizing..."
     #optimize and pass custom callback function

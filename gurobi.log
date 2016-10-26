@@ -2121,3 +2121,125 @@ Thread count was 4 (of 4 available processors)
 
 Optimal solution found (tolerance 1.00e-04)
 Best objective 1.720588457479e-01, best bound 1.720588457479e-01, gap 0.0%
+Warning: variable name ":_to_B00" has a colon
+Warning: constraint name ":_mapped_once" has a colon
+Warning: to let Gurobi read it back, use rlp format
+Optimize a model with 1540 rows, 15609 columns and 33098 nonzeros
+Coefficient statistics:
+  Matrix range    [1e+00, 1e+00]
+  Objective range [6e-10, 1e-01]
+  Bounds range    [1e+00, 1e+00]
+  RHS range       [1e+00, 1e+00]
+Found heuristic solution: objective 0.544282
+Presolve removed 1300 rows and 1990 columns
+Presolve time: 0.30s
+Presolved: 240 rows, 13619 columns, 27828 nonzeros
+Variable types: 0 continuous, 13619 integer (13619 binary)
+
+Root relaxation: objective 3.091177e-01, 1146 iterations, 0.28 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0    0.30912    0   53    0.54428    0.30912  43.2%     -    0s
+H    0     0                       0.3091203    0.30912  0.00%     -    1s
+
+Explored 0 nodes (1157 simplex iterations) in 1.15 seconds
+Thread count was 4 (of 4 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 3.091202733886e-01, best bound 3.091176988417e-01, gap 0.0008%
+
+Gurobi 6.5.1 (win64) logging started 10/26/16 13:10:39
+
+
+Gurobi 6.5.1 (win64) logging started 10/26/16 13:15:02
+
+Warning: variable name ":_to_B00" has a colon
+Warning: constraint name ":_mapped_once" has a colon
+Warning: to let Gurobi read it back, use rlp format
+Optimize a model with 1540 rows, 15609 columns and 33098 nonzeros
+Coefficient statistics:
+  Matrix range    [1e+00, 1e+00]
+  Objective range [6e-10, 1e-01]
+  Bounds range    [1e+00, 1e+00]
+  RHS range       [1e+00, 1e+00]
+Found heuristic solution: objective 0.544282
+Presolve removed 1300 rows and 1990 columns
+Presolve time: 0.08s
+Presolved: 240 rows, 13619 columns, 27828 nonzeros
+Variable types: 0 continuous, 13619 integer (13619 binary)
+
+Root relaxation: objective 9.744427e-01, 1042 iterations, 0.08 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0       0.9744427    0.97444  0.00%     -    0s
+
+Explored 0 nodes (1042 simplex iterations) in 0.35 seconds
+Thread count was 4 (of 4 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 9.744426537086e-01, best bound 9.744426537086e-01, gap 0.0%
+
+Gurobi 6.5.1 (win64) logging started 10/26/16 14:13:30
+
+
+Gurobi 6.5.1 (win64) logging started 10/26/16 14:38:10
+
+Warning: variable name ":_to_B00" has a colon
+Warning: constraint name ":_mapped_once" has a colon
+Warning: to let Gurobi read it back, use rlp format
+Optimize a model with 1540 rows, 15609 columns and 33098 nonzeros
+Coefficient statistics:
+  Matrix range    [1e+00, 1e+00]
+  Objective range [3e-07, 2e-01]
+  Bounds range    [1e+00, 1e+00]
+  RHS range       [1e+00, 1e+00]
+Found heuristic solution: objective 0.361744
+Presolve removed 1300 rows and 1990 columns
+Presolve time: 0.32s
+Presolved: 240 rows, 13619 columns, 27828 nonzeros
+Variable types: 0 continuous, 13619 integer (13619 binary)
+
+Root relaxation: objective 3.238633e-02, 1002 iterations, 0.23 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0    0.03239    0   12    0.36174    0.03239  91.0%     -    0s
+H    0     0                       0.0323892    0.03239  0.01%     -    1s
+
+Explored 0 nodes (1003 simplex iterations) in 1.28 seconds
+Thread count was 4 (of 4 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 3.238916612475e-02, best bound 3.238633218581e-02, gap 0.0087%
+Warning: variable name ":_to_B00" has a colon
+Warning: constraint name ":_mapped_once" has a colon
+Warning: to let Gurobi read it back, use rlp format
+Optimize a model with 1540 rows, 15609 columns and 33098 nonzeros
+Coefficient statistics:
+  Matrix range    [1e+00, 1e+00]
+  Objective range [3e-07, 2e-01]
+  Bounds range    [1e+00, 1e+00]
+  RHS range       [1e+00, 1e+00]
+Found heuristic solution: objective 0.361744
+Presolve removed 1300 rows and 1990 columns
+Presolve time: 0.08s
+Presolved: 240 rows, 13619 columns, 27828 nonzeros
+Variable types: 0 continuous, 13619 integer (13619 binary)
+
+Root relaxation: objective 9.642069e-01, 1048 iterations, 0.05 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0       0.9642069    0.96421  0.00%     -    0s
+
+Explored 0 nodes (1048 simplex iterations) in 0.31 seconds
+Thread count was 4 (of 4 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 9.642068761626e-01, best bound 9.642068761626e-01, gap 0.0%

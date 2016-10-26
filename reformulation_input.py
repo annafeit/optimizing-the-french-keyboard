@@ -47,7 +47,7 @@ def create_reformulation_input(w_P, w_A, w_F, w_E, corpus_weights, filename, qua
     
     ## QUADRATIC PART
     #this is unweighted
-    prob_sim_matrix = get_quadratic_prob_similarity_matrix(\
+    prob_sim, distance_level_0_norm = get_quadratic_cost(\
                                characters,\
                                keyslots,\
                                p_single,\
@@ -73,7 +73,7 @@ def create_reformulation_input(w_P, w_A, w_F, w_E, corpus_weights, filename, qua
 
     #write the distances for quadratic part only!
     f.write("# distances\n")
-    distances = distance_level_0
+    distances = distance_level_0_norm
 
     for s1 in keyslots:
         dist_strings = []

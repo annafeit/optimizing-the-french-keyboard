@@ -78,7 +78,7 @@ def accu_get_objectives(mapping, w_p, w_a, w_f, w_e,\
     lin_A = A
     print 'linear Association: %.4f'%lin_A
     if quadratic:           
-        prob_sim_matrix = get_quadratic_prob_similarity_matrix(characters,\
+        prob_sim, distance_level_0_norm = get_quadratic_cost(characters,\
                                keyslots,\
                                p_single,distance_level_0,\
                                similarity_c_c, similarity_c_l)
@@ -86,7 +86,7 @@ def accu_get_objectives(mapping, w_p, w_a, w_f, w_e,\
             if c1 in mapping and c2 in mapping:
                 s1 = mapping[c1]
                 s2 = mapping[c2]                
-                v = prob_sim_matrix[c1,c2]*distance_level_0[s1,s2]
+                v = prob_sim_matrix[c1,c2]*distance_level_0_norm[s1,s2]
                 A += v
                 #if v>0:
                     #print '%s, %s: %f'%(c1, c2, v)
@@ -161,25 +161,25 @@ def get_linear_costs(w_p, w_a, w_f, w_e,
             linear_cost[c,s] = w_p * x_P[c,s] + w_a*x_A[c,s] + w_f*x_F[c,s] + w_e*x_E[c,s]         
     return linear_cost, x_P, x_A, x_F, x_E
 
-def get_quadratic_prob_similarity_matrix(
+def get_quadratic_costs(
                                characters,\
                                keyslots,\
                                p_single,\
                                 distance,
                                similarity_c_c, similarity_c_l,\
                                ):
-    matrix = {}    
+    prob_sim = {}    
     for c1 in characters:
         for c2 in characters:
             if(c1,c2) in similarity_c_c.keys():
                 #Unweighted!
                 p = (p_single[c1] + p_single[c2])*similarity_c_c[c1,c2]
-                matrix[(c1,c2)] = p
+                prob_sim[(c1,c2)] = p
             else:
-                matrix[(c1,c2)] = 0
+                prob_sim[(c1,c2)] = 0
+    
     
     #normalize with normalization factor of full objective (later multiplied with distance)
-    matrix = normalize_dict_values(matrix)
     max_sum = 0
     for c1 in characters: 
         #for each character determine the maximum association cost for assigning that character to a slot and sum up
@@ -187,16 +187,33 @@ def get_quadratic_prob_similarity_matrix(
         for s1 in keyslots:            
             tmp_sum = 0 #sum up the association cost for all other characters 
             for c2 in characters:
-                #add maximum association cost if that character was assigned to a key
-                tmp_sum += np.max([matrix[c1,c2]*distance_level_0[s1,s2] for s2 in keyslots]) 
+                if c1 != c2:
+                    #add maximum association cost if that character was assigned to a key
+                    tmp_sum += np.max([matrix[c1,c2]*distance_level_0[s1,s2] for s2 in keyslots if s2 != s1]) 
             costs_per_slot.append(tmp_sum)
         max_sum += np.max(costs_per_slot) #
         
-    for (c1,c2), v in matrix.iteritems():
-        matrix[(c1,c2)] = v / float(max_sum)
+    min_sum = 0
+    for c1 in characters: 
+        #for each character determine the maximum association cost for assigning that character to a slot and sum up
+        costs_per_slot = []
+        for s1 in keyslots:            
+            tmp_sum = 0 #sum up the association cost for all other characters 
+            for c2 in characters:
+                if c1 != c2:
+                    #add maximum association cost if that character was assigned to a key
+                    tmp_sum += np.min([matrix[c1,c2]*distance_level_0[s1,s2] for s2 in keyslots if s2 != s1]) 
+            costs_per_slot.append(tmp_sum)
+        min_sum += np.min(costs_per_slot) #
+    
+    #normalization factor is included in the distance because there all values are > 0
+    n = len(characters)
+    for (c1,c2), v in distance_level_0.iteritems():
+        if v>0:
+            distance_level_0[(c1,c2)] = (v - (min_sum/float(n))) / (float(max_sum) - float(min_sum))
             
     
-    return matrix
+    return prob_sim, distance_level_0_norm
 
 def normalize_dict_values(d):
     """
@@ -219,10 +236,17 @@ def normalize_objectives(d):
     for c in get_characters():
         all_slot_values = [v for (_c,_s), v in d.iteritems() if _c==c]
         max_sum += np.max(all_slot_values)
+        
+        
+    min_sum = 0
+    for c in get_characters():
+        all_slot_values = [v for (_c,_s), v in d.iteritems() if _c==c]
+        min_sum += np.min(all_slot_values)
    
     #then normalize by that
+    n = len(get_characters())
     for k, v in d.iteritems():
-        d[k] = v / float(max_sum)
+        d[k] = (v - (min_sum/float(n))) / (float(max_sum) - float(min_sum))
        
     return d
            
