@@ -24,7 +24,10 @@ _ergonomics_file = "input/ergonomics/ergonomics_antti.csv"
 _performance_file = "input/performance/performance_daryl.csv"
 scenario = ""
 char_set = ""
-    
+
+def get_scenario_and_char_set():
+    return scenario, char_set
+
 def set_scenario_files(scenario_name, character_set):
     global scenario
     scenario = scenario_name

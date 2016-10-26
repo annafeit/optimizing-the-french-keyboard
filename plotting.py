@@ -245,15 +245,22 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
                 pos_y = pos_alt_shift_y
                 ha = 'right'
                 va = 'top'
+                
+            if u"d" in l: #dead key
+                l = re.sub('d', '', l)
+                c = "#C44E52"
+            else:
+                c = "k"
+            
             x = (column*key_width)+column*column_distance + pos_x - row_shift[slot[0]]
             y = (row*key_height) + row*row_distance + pos_y
 
             ax.text(x,y,l,            
                 horizontalalignment=ha,
                 verticalalignment=va,
-                fontsize=14,
+                fontsize=12,
                 fontweight='bold',
-                color= 'k'#(0.4,0.4,0.4)        
+                color= c#(0.4,0.4,0.4)        
              )
            
     #Add mapping annotation

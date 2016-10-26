@@ -80,7 +80,7 @@ def accu_get_objectives(mapping, w_p, w_a, w_f, w_e,\
     if quadratic:           
         prob_sim_matrix = get_quadratic_prob_similarity_matrix(characters,\
                                keyslots,\
-                               p_single,\
+                               p_single,distance_level_0,\
                                similarity_c_c, similarity_c_l)
         for (c1,c2) in similarity_c_c:
             if c1 in mapping and c2 in mapping:
@@ -149,10 +149,10 @@ def get_linear_costs(w_p, w_a, w_f, w_e,
             x_E[c,s] = E
     #now normalize these terms such that they are all between 0 and 1
 
-    x_P = normalize_dict_values(x_P)
-    x_A = normalize_dict_values(x_A)
-    x_F = normalize_dict_values(x_F)
-    x_E = normalize_dict_values(x_E)
+    x_P = normalize_objectives(normalize_dict_values(x_P))
+    x_A = normalize_objectives(normalize_dict_values(x_A))
+    x_F = normalize_objectives(normalize_dict_values(x_F))
+    x_E = normalize_objectives(normalize_dict_values(x_E))
 
     #weighted sum of linear terms
     linear_cost = {}
@@ -165,6 +165,7 @@ def get_quadratic_prob_similarity_matrix(
                                characters,\
                                keyslots,\
                                p_single,\
+                                distance,
                                similarity_c_c, similarity_c_l,\
                                ):
     matrix = {}    
@@ -176,23 +177,54 @@ def get_quadratic_prob_similarity_matrix(
                 matrix[(c1,c2)] = p
             else:
                 matrix[(c1,c2)] = 0
-            
+    
+    #normalize with normalization factor of full objective (later multiplied with distance)
     matrix = normalize_dict_values(matrix)
+    max_sum = 0
+    for c1 in characters: 
+        #for each character determine the maximum association cost for assigning that character to a slot and sum up
+        costs_per_slot = []
+        for s1 in keyslots:            
+            tmp_sum = 0 #sum up the association cost for all other characters 
+            for c2 in characters:
+                #add maximum association cost if that character was assigned to a key
+                tmp_sum += np.max([matrix[c1,c2]*distance_level_0[s1,s2] for s2 in keyslots]) 
+            costs_per_slot.append(tmp_sum)
+        max_sum += np.max(costs_per_slot) #
+        
+    for (c1,c2), v in matrix.iteritems():
+        matrix[(c1,c2)] = v / float(max_sum)
+            
+    
     return matrix
 
 def normalize_dict_values(d):
     """
-    Normalizes all values to be between 0 and 1 
+    Normalizes all values to be between 0 and 1 such that they maximally sum up to 1
     """
-    #nonzeros = len([v for v in d.values() if not v == 0])
+    #normalize single values to be between 0 and 1
     maximum = np.max(d.values())
     minimum = np.min(d.values())
-    #sum_all = np.sum(d.values())
+    
     for k, v in d.iteritems():
         d[k] = (v - minimum) / float(maximum - minimum)        
-        #d[k] = d[k] / float(nonzeros)
-        #d[k] = v / float(sum_all)
     return d
-    
+
+def normalize_objectives(d):
+    """
+     Normalize such that they maximally sum up to 1
+    """   
+    #for each character add up the maximum cost for assigning that character to a slot
+    max_sum = 0
+    for c in get_characters():
+        all_slot_values = [v for (_c,_s), v in d.iteritems() if _c==c]
+        max_sum += np.max(all_slot_values)
+   
+    #then normalize by that
+    for k, v in d.iteritems():
+        d[k] = v / float(max_sum)
+       
+    return d
+           
 def neighborhood(s, n, keyslots, distances):
     return [s2 for s2 in keyslots if distances[s,s2]<= n and (not s == s2)]

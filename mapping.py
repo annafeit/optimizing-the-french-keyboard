@@ -31,9 +31,13 @@ def create_map_from_txt(path):
     all_lines = mst.read().splitlines()
 
     mapping = {}
-    for line in all_lines:    
-        var_val = line.split(" ") 
-        mapping[correct_diacritic(var_val[0].strip())] = var_val[1]
+    for i in range(0,len(all_lines)):  
+        line = all_lines[i]
+        if i==0 and "#" in line:
+            continue; #skip comments
+        else:
+            var_val = line.split(" ") 
+            mapping[correct_diacritic(var_val[0].strip())] = var_val[1]
             
     mst.close()
     return mapping
@@ -48,13 +52,14 @@ def create_map_from_reformulation(path):
     
     #read in mst file line by line and create mapping
     mst = codecs.open(path, 'r', encoding="utf-8")
-    first_line = mst.readline()
-    parts = first_line.split(" ")
+    first_line = mst.readline() #optimization parameters
+    snd_line = mst.readline() #objective
+    parts = snd_line.split(" ")
     objective = float(parts[-1])
     all_lines = mst.read().splitlines()
 
     mapping = {}
-    for line in all_lines:        
+    for line in all_lines:
         var_val = line.split(" ")
         variable = var_val[0]
         #take only "x" decision variables which are set to 1

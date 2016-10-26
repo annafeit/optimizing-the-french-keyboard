@@ -33,10 +33,10 @@ def create_reformulation_input(w_P, w_A, w_F, w_E, corpus_weights, filename, qua
                                                similarity_c_c, similarity_c_l,\
                                                distance_level_0, distance_level_1,\
                                                ergonomics)
-    
+    scenario, char_set = get_scenario_and_char_set()
     #Writes an input file for the reformualtion
     f = codecs.open("reformulation/input/"+filename+".txt", 'w', encoding="utf-8")
-    f.write("# scenario=%s,set=%s,w_P=%f,w_A=%f,w_F=%f,w_E=%f,w_formal=%f,w_twitter=%f,w_code=%f\n"%(scenario,char_set,
+    f.write("#scenario=%s,set=%s,w_P=%f,w_A=%f,w_F=%f,w_E=%f,w_formal=%f,w_twitter=%f,w_code=%f\n"%(scenario,char_set,
                                                                                 w_P,w_A, w_F, w_E, 
                                                                                 corpus_weights["formal"], 
                                                                                 corpus_weights["twitter"],
