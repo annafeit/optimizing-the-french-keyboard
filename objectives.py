@@ -1,7 +1,15 @@
+# -*- coding: utf-8 -*-
 from read_input import * 
 from test_model import*
+from gurobipy import *
 import numpy as np 
 PYTHONIOENCODING="utf-8"
+
+capitals ={u'à':u'À',u'â':u'Â',u'ç':u'Ç',u'é':u'É',u'è':u'È',u'ê':u'Ê',\
+               u'ë':u'Ë',u'î':u'Î',u'ï':u'Ï',u'ô':u'Ô',\
+               u'ù':u'Ù',u'û':u'Û',u'ü':u'Ü',u'ÿ':u'Ÿ',u'æ':u'Æ',u'œ':u'Œ',\
+               u'ß':u'ẞ',u'þ':u'Þ',u'ð':u'Ð',u'ŋ':u'Ŋ',u'ĳ':u'Ĳ',\
+               u'ə':u'Ə',u'ʒ':u'Ʒ',u'ı':u'İ'}
 
 def get_objectives(mapping, w_p, w_a, w_f, w_e, corpus_weights,quadratic=0):
     """
@@ -18,6 +26,7 @@ def get_objectives(mapping, w_p, w_a, w_f, w_e, corpus_weights,quadratic=0):
     ergonomics\
      = get_all_input_values(corpus_weights)
                    
+        
     return accu_get_objectives(mapping, w_p, w_a, w_f, w_e, \
                                azerty,\
                                characters,\
@@ -78,7 +87,7 @@ def accu_get_objectives(mapping, w_p, w_a, w_f, w_e,\
     lin_A = A
     print 'linear Association: %.4f'%lin_A
     if quadratic:           
-        prob_sim, distance_level_0_norm = get_quadratic_cost(characters,\
+        prob_sim, distance_level_0_norm = get_quadratic_costs(characters,\
                                keyslots,\
                                p_single,distance_level_0,\
                                similarity_c_c, similarity_c_l)
@@ -86,7 +95,7 @@ def accu_get_objectives(mapping, w_p, w_a, w_f, w_e,\
             if c1 in mapping and c2 in mapping:
                 s1 = mapping[c1]
                 s2 = mapping[c2]                
-                v = prob_sim_matrix[c1,c2]*distance_level_0_norm[s1,s2]
+                v = prob_sim[c1,c2]*distance_level_0_norm[s1,s2]
                 A += v
                 #if v>0:
                     #print '%s, %s: %f'%(c1, c2, v)
@@ -109,7 +118,7 @@ def get_linear_costs(w_p, w_a, w_f, w_e,
     """ computes the linear cost: for each linear variable x[c,s] compute the P, A, F and E term (as if it is chosen)
         Returns the linear cost for each objective and the weighted sum.                
     """
-
+    print("Getting linear cost")
     x_P = {} 
     x_A = {} 
     x_F = {} 
@@ -147,12 +156,17 @@ def get_linear_costs(w_p, w_a, w_f, w_e,
             x_A[c,s] = A
             x_F[c,s] = F
             x_E[c,s] = E
-    #now normalize these terms such that they are all between 0 and 1
-
-    x_P = normalize_objectives(normalize_dict_values(x_P))
-    x_A = normalize_objectives(normalize_dict_values(x_A))
-    x_F = normalize_objectives(normalize_dict_values(x_F))
-    x_E = normalize_objectives(normalize_dict_values(x_E))
+    
+    
+    #now normalize these terms by minimizing/maximizing each individually such that they are all between 0 and 1    
+    print("========= Normalize Performance =========")
+    x_P = normalize_empirically(x_P, characters, keyslots, capitalization_constraints=1)
+    print("========= Normalize Association =========")
+    x_A = normalize_empirically(x_A, characters, keyslots, capitalization_constraints=1)
+    print("========= Normalize Familiarity =========")
+    x_F = normalize_empirically(x_F, characters, keyslots, capitalization_constraints=1)
+    print("========= Normalize Ergonomics =========")
+    x_E = normalize_empirically(x_E, characters, keyslots, capitalization_constraints=1)
 
     #weighted sum of linear terms
     linear_cost = {}
@@ -165,9 +179,10 @@ def get_quadratic_costs(
                                characters,\
                                keyslots,\
                                p_single,\
-                                distance,
+                                distance_level_0,
                                similarity_c_c, similarity_c_l,\
-                               ):
+                               theoretical_normalization=1):
+    print("Getting quadratic cost")
     prob_sim = {}    
     for c1 in characters:
         for c2 in characters:
@@ -178,39 +193,38 @@ def get_quadratic_costs(
             else:
                 prob_sim[(c1,c2)] = 0
     
+    if theoretical_normalization:
+        #normalize with normalization factor of full objective (later multiplied with distance)
+        max_sum = 0
+        min_sum = 0
+        for c1 in characters: 
+            #for each character determine the maximum association cost for assigning that character to a slot and sum up
+            costs_per_slot_min = []
+            costs_per_slot_max = []
+            for s1 in keyslots:            
+                tmp_sum_min = 0 #sum up the association cost for all other characters 
+                tmp_sum_max = 0
+                for c2 in characters:
+                    if c1 != c2:
+                        #add maximum association cost if that character was assigned to a key
+                        tmp_sum_max += np.max([prob_sim[c1,c2]*distance_level_0[s1,s2] for s2 in keyslots if s2 != s1]) 
+                        tmp_sum_min += np.min([prob_sim[c1,c2]*distance_level_0[s1,s2] for s2 in keyslots if s2 != s1]) 
+                costs_per_slot_min.append(tmp_sum_min)
+                costs_per_slot_max.append(tmp_sum_max)
+            max_sum += np.max(costs_per_slot_max) #
+            min_sum += np.min(costs_per_slot_min) #
+    else:
+        prob_sim = normalize_dict_values(prob_sim)
     
-    #normalize with normalization factor of full objective (later multiplied with distance)
-    max_sum = 0
-    for c1 in characters: 
-        #for each character determine the maximum association cost for assigning that character to a slot and sum up
-        costs_per_slot = []
-        for s1 in keyslots:            
-            tmp_sum = 0 #sum up the association cost for all other characters 
-            for c2 in characters:
-                if c1 != c2:
-                    #add maximum association cost if that character was assigned to a key
-                    tmp_sum += np.max([matrix[c1,c2]*distance_level_0[s1,s2] for s2 in keyslots if s2 != s1]) 
-            costs_per_slot.append(tmp_sum)
-        max_sum += np.max(costs_per_slot) #
-        
-    min_sum = 0
-    for c1 in characters: 
-        #for each character determine the maximum association cost for assigning that character to a slot and sum up
-        costs_per_slot = []
-        for s1 in keyslots:            
-            tmp_sum = 0 #sum up the association cost for all other characters 
-            for c2 in characters:
-                if c1 != c2:
-                    #add maximum association cost if that character was assigned to a key
-                    tmp_sum += np.min([matrix[c1,c2]*distance_level_0[s1,s2] for s2 in keyslots if s2 != s1]) 
-            costs_per_slot.append(tmp_sum)
-        min_sum += np.min(costs_per_slot) #
     
-    #normalization factor is included in the distance because there all values are > 0
-    n = len(characters)
-    for (c1,c2), v in distance_level_0.iteritems():
-        if v>0:
-            distance_level_0[(c1,c2)] = (v - (min_sum/float(n))) / (float(max_sum) - float(min_sum))
+    
+    #normalization factor is included in the distance because there all values are > 0. Otherwise there are some problems
+    distance_level_0_norm = distance_level_0.copy()
+    if theoretical_normalization:
+        n = len(characters)
+        for (s1,s2), v in distance_level_0.iteritems():
+            if v>0:
+                distance_level_0_norm[(s1,s2)] = (v - (min_sum/float(n))) / (float(max_sum) - float(min_sum))
             
     
     return prob_sim, distance_level_0_norm
@@ -227,28 +241,85 @@ def normalize_dict_values(d):
         d[k] = (v - minimum) / float(maximum - minimum)        
     return d
 
-def normalize_objectives(d):
+def normalize_empirically(X_O, characters, keyslots, capitalization_constraints=1):
     """
-     Normalize such that they maximally sum up to 1
+     Normalize empirically for the result to be between 0 and 1. 
+     First minimizes and maximizes the keyboard problem for the given cost (X_O) and then normalizes all values in X_O
+     to minimally/maximally sum up to 0/1. 
+     Can only be used for the linear terms (Performance, Association, Ergonomics, Familiarity)
     """   
-    #for each character add up the maximum cost for assigning that character to a slot
-    max_sum = 0
-    for c in get_characters():
-        all_slot_values = [v for (_c,_s), v in d.iteritems() if _c==c]
-        max_sum += np.max(all_slot_values)
+    
+    if len(characters) > len(keyslots):
+        print "Error: more characters sthan keyslots"
+        return
+    
+    m = Model("keyboard_layout")    
+    #add decision variables
+    x = {}
+    for c in characters:   
+        for s in keyslots:
+            n = u""+c+u"_to_"+s  
+            n = n.encode("utf-8")
+            x[c,s] = m.addVar(vtype=GRB.BINARY, name=n)            
+            
+            
+    m.update()
+    m._vars = m.getVars()
+     
+    #Define the objective terms
+    O = quicksum(
+            X_O[c,s]*x[c,s]\
+                for c in characters for s in keyslots
+        )                
+     
+    m._O = O    
+    
+    #add the constraints. One for each character, one for each keyslot
+    for c in characters:
+        m.addConstr(quicksum(x[c,s] for s in keyslots) == 1, c +  "_mapped_once")
         
-        
-    min_sum = 0
-    for c in get_characters():
-        all_slot_values = [v for (_c,_s), v in d.iteritems() if _c==c]
-        min_sum += np.min(all_slot_values)
+    for s in keyslots:
+        m.addConstr(quicksum(x[c,s] for c in characters) <= 1, s + "_assigned_at_most_once")
+    
+    if capitalization_constraints:
+        print("Adding capitalization constraints")
+        for c,s_c in capitals.iteritems():
+            if c in characters and s_c in characters:
+                for k in keyslots:
+                    if "Shift" in k:
+                        m.addConstr(x[c,k] == 0, c +  "_not_mapped_to_shifted_key_"+k)
+                    else:
+                        if k+"_Shift" in keyslots:
+                            #if character is assigned to this key, its capital version must be assigned to shifted version of the key
+                            m.addConstr(x[c,k] - x[s_c, k+"_Shift"] == 0,c +  "_and_"+s_c+"mapped_to_shifted_"+k)
+                        else:
+                            #unshifted version should not be assigned to key where shifted version is not available
+                            m.addConstr(x[c,k] == 0, c+"_no_shift_available_"+k)
+
+    m.setParam("OutputFlag", 0)
+    m.update()
+    
+    # Set objective    
+    m.setObjective(O, GRB.MINIMIZE)    
+    m.update()    
+    #Optimize
+    m.optimize()        
+    minimum = m._O.getValue()
+    print("===> Minimum: %.5f"%minimum)
    
-    #then normalize by that
-    n = len(get_characters())
-    for k, v in d.iteritems():
-        d[k] = (v - (min_sum/float(n))) / (float(max_sum) - float(min_sum))
+    # Set objective
+    m.setObjective(O, GRB.MAXIMIZE)
+    m.update()
+    #Optimize
+    m.optimize()
+    maximum = m._O.getValue()
+    print("===> Maximum: %.5f"%maximum)
+    
+    n = len(characters)
+    for k, v in X_O.iteritems():
+        X_O[k] = (v - (minimum/float(n))) / (float(maximum) - float(minimum))
        
-    return d
+    return X_O
            
 def neighborhood(s, n, keyslots, distances):
     return [s2 for s2 in keyslots if distances[s,s2]<= n and (not s == s2)]

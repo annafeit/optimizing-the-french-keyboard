@@ -21,7 +21,7 @@ _distance_file_1 = "input/distance/distance1.txt"
 _frequency_letter_file = ""
 _frequency_bigram_file = ""
 _ergonomics_file = "input/ergonomics/ergonomics_antti.csv"
-_performance_file = "input/performance/performance_daryl.csv"
+_performance_file = "input/performance/performance_daryl_cleaned.csv"
 scenario = ""
 char_set = ""
 

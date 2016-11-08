@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
 import pandas as pd
@@ -297,7 +298,12 @@ def plot_mapping(mapping, plotname="", azerty=-1, numbers=-1, letters=-1,\
             c = "#C44E52"
         else:
             c = "#4C72B0"
-            
+        
+        #use tex for those three characters that won't print
+        if l == u"≃":
+            l = r"$\simeq$"
+        if l == u"‑":
+            l = r"$-$"
         ax.text(x,y,l,            
             horizontalalignment=ha,
             verticalalignment=va,

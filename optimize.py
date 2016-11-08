@@ -31,7 +31,7 @@ def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, corpus_weights, quadratic=0, 
     ergonomics\
      = get_all_input_values(corpus_weights)
                    
-    model,mapping =  _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, \
+    model,mapping, obj, P, A, F, E =  _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, \
                                azerty,\
                                characters,\
                                keyslots,\
@@ -42,24 +42,17 @@ def solve_the_keyboard_Problem(w_p, w_a, w_f, w_e, corpus_weights, quadratic=0, 
                                distance_level_0, distance_level_1,\
                                ergonomics, quadratic=quadratic, capitalization_constraints=capitalization_constraints, minimize=minimize)
     
-    #obj, P, A, F, E = accu_get_objectives(mapping, w_p, w_a, w_f, w_e, \
-    #                           azerty,\
-    #                           characters,\
-    #                           keyslots,\
-    #                           letters,\
-    #                           p_single, p_bigram,\
-    #                           performance,\
-    #                           similarity_c_c, similarity_c_l,\
-    #                           distance_level_0, distance_level_1,\
-    #                           ergonomics, quadratic=quadratic)
+
     
-    obj, P, A, F, E = get_objectives(mapping, w_p, w_a, w_f, w_e, corpus_weights,quadratic=0)
+    #obj, P, A, F, E = get_objectives(mapping, w_p, w_a, w_f, w_e, corpus_weights,quadratic=0)
     
-    plot_mapping(mapping, plotname="mappings/"+name+".png", azerty=azerty, letters=letters,\
-                 objective=obj,\
-                 p=P, a=A, f=F, e=E, w_p=w_p,w_a=w_a, w_f=w_f, w_e=w_e)
+    if name != "":
+        plot_mapping(mapping, plotname="mappings/"+name+".png", azerty=azerty, letters=letters,\
+                     objective=obj,\
+                     p=P, a=A, f=F, e=E, w_p=w_p,w_a=w_a, w_f=w_f, w_e=w_e)
     
-    log_mapping(mapping, "mappings/"+name+".txt", objective=obj)
+    if name != "":
+        log_mapping(mapping, "mappings/"+name+".txt", objective=obj)
     
     return mapping
     
@@ -87,8 +80,10 @@ def _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e,
     #add decision variables
     x = {}
     for c in characters:   
-        for s in keyslots:
+        for s in keyslots:            
             n = u""+c+u"_to_"+s  
+            if c == ":":
+                n = u"colon_to_"+s  
             n = n.encode("utf-8")
             x[c,s] = m.addVar(vtype=GRB.BINARY, name=n)            
             
@@ -105,8 +100,7 @@ def _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e,
                                performance,\
                                similarity_c_c, similarity_c_l,\
                                distance_level_0, distance_level_1,\
-                               ergonomics)
-
+                               ergonomics)    
     #Define the objective terms
     P = quicksum(
             x_P[c,s]*x[c,s]\
@@ -117,12 +111,7 @@ def _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e,
             x_A[c,s]*x[c,s]\
                  for c in characters for s in keyslots
         )
-    if quadratic: 
-        A += 0#quicksum(
-            #(p_single[c1] + p_single[c2])*similarity_c_c[(c1,c2)]*(1-distance_level_1[(s1,s2)])*x[c1,s1]*x[c2,s2]\
-            #     for (c1,c2) in similarity_c_c for s1 in keyslots for s2 in keyslots)
-                
-        
+    
     F = quicksum(
             x_F[c,s]*x[c,s]\
                  for c in characters for s in keyslots
@@ -178,15 +167,43 @@ def _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e,
     print "set constraints"
     
     m.update()
-    m.write("model.lp")
-    if quadratic:
-        print "optimizing with quadratic terms..."
-    else:
-        print "optimizing with linear terms only..."
+    m.write("model.rlp")
+    print "optimizing with LINEAR terms only..."
+    
     #optimize and pass custom callback function
-    m.optimize(opti_callback)
     
+    m.setParam('NodefileStart', 0.5)    
     
+    print "SETTING: nodefileStart = 0.5"
+    print "optimizing..."
+    
+    if quadratic: 
+        m.optimize()
+    else:
+        m.optimize(opti_callback)
+    m.write("mappings/lin_solution.mst")
+    #IF QUADRATIC, solve again starting from the previous solution
+    if quadratic:         
+        print("optimizing again with QUADRATIC terms...")
+        
+        prob_sim, distance_level_0_norm = get_quadratic_costs(characters,\
+                               keyslots,\
+                               p_single,distance_level_0,\
+                               similarity_c_c, similarity_c_l)       
+        
+        A += quicksum(
+            prob_sim[c1,c2]*distance_level_0_norm[s1,s2]*x[c1,s1]*x[c2,s2]\
+                 for (c1,c2) in similarity_c_c for s1 in keyslots for s2 in keyslots if s1 != s2)
+        m._A = A
+        
+        if minimize:
+            m.setObjective((w_p*P)+(w_a*A)+(w_f*F)+(w_e*E), GRB.MINIMIZE)
+        else:
+            m.setObjective((w_p*P)+(w_a*A)+(w_f*F)+(w_e*E), GRB.MAXIMIZE)
+        m.update() 
+        m.write("model.rlp")
+        m.read("mappings/lin_solution.mst")
+        m.optimize(opti_callback)
 
     print "done"
     
@@ -199,13 +216,6 @@ def _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e,
     
     #Print the solution
     mapping = create_mapping(m)
-    for c in characters:
-        for s in keyslots:
-            v=x[c,s]
-            if v.x ==1:                    
-                #mapping[c] = s                
-                print('%s to %s' %(c,s))
-            
     
     try: 
         print('Obj: %g' % m.objVal)
@@ -220,7 +230,7 @@ def _solve_the_keyboard_Problem(w_p, w_a, w_f, w_e,
     #        print('%s' % c.constrName)     
     
     #return the model with the fixed solution
-    return m, mapping
+    return m, mapping, m.objVal, m._P.getValue(), m._A.getValue(), m._F.getValue(), m._E.getValue()
 
 
 
@@ -294,9 +304,9 @@ def optimize_reformulation(lp_path, capitalization=1):
         os.makedirs(directory)
     
     model = read(new_path)  
-    model.setParam('NodefileStart', 0.5)
-    model.setParam('WorkerPool', "halti,montblanc")
-    model.setParam('ConcurrentJobs', 6)
+    #model.setParam('NodefileStart', 0.5)
+    #model.setParam('WorkerPool', "halti,montblanc")
+    #model.setParam('ConcurrentJobs', 6)
     #model.setParam('WorkerPassword', "")
     
     print "SETTING: nodefileStart = 0.5"
