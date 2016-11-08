@@ -172,11 +172,10 @@ def get_linear_costs(w_p, w_a, w_f, w_e,
     linear_cost = {}
     for c in characters: 
         for s in keyslots:
-            linear_cost[c,s] = w_p * x_P[c,s] + w_a*x_A[c,s] + w_f*x_F[c,s] + w_e*x_E[c,s]         
+            linear_cost[c,s] = (w_p * x_P[c,s]) + (w_a*x_A[c,s]) + (w_f*x_F[c,s]) + (w_e*x_E[c,s])
     return linear_cost, x_P, x_A, x_F, x_E
 
-def get_quadratic_costs(
-                               characters,\
+def get_quadratic_costs(characters,\
                                keyslots,\
                                p_single,\
                                 distance_level_0,
